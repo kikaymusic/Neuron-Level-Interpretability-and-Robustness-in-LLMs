@@ -59,8 +59,8 @@ This repository provides an end-to-end pipeline for:
 
 ## Acknowledgements
 
-This project is based on a fork of [NeuroX](https://github.com/NeuroX/NLP-Revealing-Neuron), originally developed by the NeuroX team.
+This project is based on a fork of  [NeuroX](https://github.com/fdalvi/NeuroX), originally developed by the NeuroX team.
 
 I gratefully acknowledge their work, which laid the foundation for this implementation. The original code and ideas from their repository were essential in building upon neuron-level interpretability for neural networks.
 
-Please refer to their [original repository](https://github.com/NeuroX/NLP-Revealing-Neuron) for further details, citations, and their full publication list.
+Please refer to their [original repository](https://github.com/fdalvi/NeuroX) for further details, citations, and their full publication list.
