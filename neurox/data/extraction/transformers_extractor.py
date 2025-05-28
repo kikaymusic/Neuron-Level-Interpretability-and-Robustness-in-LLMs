@@ -14,12 +14,13 @@ import sys
 
 import numpy as np
 import torch
-
-from neurox.data.writer import ActivationsWriter
+import pandas as pd
 
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModelForSequenceClassification
 
+from neurox.data.writer import ActivationsWriter
 
 def get_model_and_tokenizer(model_desc, device="cpu", random_weights=False):
     """
@@ -102,12 +103,10 @@ def aggregate_repr(state, start, end, aggregation):
         Matrix of size [NUM_LAYERS x LAYER_DIM]
     """
     if end < start:
-        sys.stderr.write(
-            "WARNING: An empty slice of tokens was encountered. "
-            + "This probably implies a special unicode character or text "
-            + "encoding issue in your original data that was dropped by the "
-            + "transformer model's tokenizer.\n"
-        )
+        sys.stderr.write("WARNING: An empty slice of tokens was encountered. " +
+            "This probably implies a special unicode character or text " +
+            "encoding issue in your original data that was dropped by the " +
+            "transformer model's tokenizer.\n")
         return np.zeros((state.shape[0], state.shape[2]))
     if aggregation == "first":
         return state[:, start, :]
@@ -124,67 +123,12 @@ def extract_sentence_representations(
     device="cpu",
     include_embeddings=True,
     aggregation="last",
-    dtype="float32",
-    include_special_tokens=False,
-    tokenization_counts={},
+    tokenization_counts={}
 ):
     """
-    Get representations for a single sentence
-
-    The extractor runs a detokenization procedure to combine subwords
-    automatically. For instance, a sentence "Hello, how are you?" may be
-    tokenized by the model as "Hell @@o , how are you @@?". This extractor
-    automatically detokenizes the subtokens back into the original token.
-
-
-    Parameters
-    ----------
-    sentence : str
-        Sentence for which the extraction needs to be done. The returned output
-        will have representations for exactly the same number of elements as
-        tokens in this sentence (counted by `sentence.split(' ')`).
-
-    model : transformers model
-        An instance of one of the transformers.modeling classes
-
-    tokenizer : transformers tokenizer
-        An instance of one of the transformers.tokenization classes
-
-    device : str, optional
-        Specifies the device (CPU/GPU) on which the extraction should be
-        performed. Defaults to 'cpu'
-
-    include_embeddings : bool, optional
-        Whether the embedding layer should be included in the final output, or
-        just regular layers. Defaults to True
-
-    aggregation : {'first', 'last', 'average'}, optional
-        Aggregation method for combining subword activations. Defaults to 'last'
-
-    dtype : str, optional
-        Data type in which the activations will be stored. Supports all numpy
-        based tensor types. Common values are 'float32' and 'float16'. Defaults
-        to 'float16'
-
-    include_special_tokens : bool, optional
-        Whether or not to special tokens in the extracted representations.
-        Special tokens are tokens not present in the original sentence, but are
-        added by the tokenizer, such as [CLS], [SEP] etc.
-
-    tokenization_counts : dict, optional
-        Tokenization counts to use across a dataset for efficiency
-
-    Returns
-    -------
-    final_hidden_states : numpy.ndarray
-        Numpy Matrix of size [``NUM_LAYERs`` x ``NUM_TOKENS`` x ``NUM_NEURONS``].
-
-    detokenizer : list
-        List of detokenized words. This will have the same number of elements as
-        tokens in the original sentence, plus special tokens if requested. Each element
-        preserves tokenization artifacts (such as `##`, `@@` etc) to enable further
-        automatic processing.
+    Get representations for one sentence
     """
+    # this follows the HuggingFace API for transformers
 
     special_tokens = [
         x for x in tokenizer.all_special_tokens if x != tokenizer.unk_token
@@ -192,18 +136,11 @@ def extract_sentence_representations(
     special_tokens_ids = tokenizer.convert_tokens_to_ids(special_tokens)
 
     original_tokens = sentence.split(" ")
-
-    # Add letters and spaces around each word since some tokenizers are context sensitive
-    tmp_tokens = []
-    if len(original_tokens) > 0:
-        tmp_tokens.append(f"{original_tokens[0]} a")
-    tmp_tokens += [f"a {x} a" for x in original_tokens[1:-1]]
-    if len(original_tokens) > 1:
-        tmp_tokens.append(f"a {original_tokens[-1]}")
-
-    assert len(original_tokens) == len(
-        tmp_tokens
-    ), f"Original: {original_tokens}, Temp: {tmp_tokens}"
+    # Add a letter and space before each word since some tokenizers are space sensitive
+    tmp_tokens = [
+        "a" + " " + x if x_idx != 0 else x for x_idx, x in enumerate(original_tokens)
+    ]
+    assert len(original_tokens) == len(tmp_tokens)
 
     with torch.no_grad():
         # Get tokenization counts if not already available
@@ -211,15 +148,8 @@ def extract_sentence_representations(
             tok_ids = [
                 x for x in tokenizer.encode(token) if x not in special_tokens_ids
             ]
-            # Ignore the added letter tokens
-            if token_idx != 0 and token_idx != len(tmp_tokens) - 1:
-                # Word appearing in the middle of the sentence
-                tok_ids = tok_ids[1:-1]
-            elif token_idx == 0:
-                # Word appearing at the beginning
-                tok_ids = tok_ids[:-1]
-            else:
-                # Word appearing at the end
+            if token_idx != 0:
+                # Ignore the first token (added letter)
                 tok_ids = tok_ids[1:]
 
             if token in tokenization_counts:
@@ -243,7 +173,7 @@ def extract_sentence_representations(
                 hidden_states[0].cpu().numpy()
                 for hidden_states in all_hidden_states[1:]
             ]
-        all_hidden_states = np.array(all_hidden_states, dtype=dtype)
+        all_hidden_states = np.array(all_hidden_states)
 
     print('Sentence         : "%s"' % (sentence))
     print("Original    (%03d): %s" % (len(original_tokens), original_tokens))
@@ -255,26 +185,14 @@ def extract_sentence_representations(
         )
     )
 
+    # Remove special tokens
+    ids_without_special_tokens = [x for x in ids if x not in special_tokens_ids]
+    idx_without_special_tokens = [
+        t_i for t_i, x in enumerate(ids) if x not in special_tokens_ids
+    ]
+    filtered_ids = [ids[t_i] for t_i in idx_without_special_tokens]
     assert all_hidden_states.shape[1] == len(ids)
-
-    # Handle special tokens
-    # filtered_ids will contain all ids if we are extracting with
-    #  special tokens, and only normal word/subword ids if we are
-    #  extracting without special tokens
-    # all_hidden_states will also be filtered at this step to match
-    #  the ids in filtered ids
-    filtered_ids = ids
-    idx_special_tokens = [t_i for t_i, x in enumerate(ids) if x in special_tokens_ids]
-    special_token_ids = [ids[t_i] for t_i in idx_special_tokens]
-
-    if not include_special_tokens:
-        idx_without_special_tokens = [
-            t_i for t_i, x in enumerate(ids) if x not in special_tokens_ids
-        ]
-        filtered_ids = [ids[t_i] for t_i in idx_without_special_tokens]
-        all_hidden_states = all_hidden_states[:, idx_without_special_tokens, :]
-        special_token_ids = []
-
+    all_hidden_states = all_hidden_states[:, idx_without_special_tokens, :]
     assert all_hidden_states.shape[1] == len(filtered_ids)
     print(
         "Filtered   (%03d): %s"
@@ -283,86 +201,27 @@ def extract_sentence_representations(
             tokenizer.convert_ids_to_tokens(filtered_ids),
         )
     )
-
-    # Get actual tokens for filtered ids in order to do subword
-    #  aggregation
     segmented_tokens = tokenizer.convert_ids_to_tokens(filtered_ids)
 
-    # Perform subword aggregation/detokenization
-    #  After aggregation, we should have |original_tokens| embeddings,
-    #  one for each word. If special tokens are included, then we will
-    #  have |original_tokens| + |special_tokens|
+    # Perform actual subword aggregation/detokenization
     counter = 0
     detokenized = []
     final_hidden_states = np.zeros(
-        (
-            all_hidden_states.shape[0],
-            len(original_tokens) + len(special_token_ids),
-            all_hidden_states.shape[2],
-        ),
-        dtype=dtype,
+        (all_hidden_states.shape[0], len(original_tokens), all_hidden_states.shape[2])
     )
     inputs_truncated = False
 
-    # Keep track of what the previous token was. This is used to detect
-    #  special tokens followed/preceeded by dropped tokens, which is an
-    #  ambiguous situation for the detokenizer
-    prev_token_type = "NONE"
-
-    last_special_token_pointer = 0
     for token_idx, token in enumerate(tmp_tokens):
-        # Handle special tokens
-        if include_special_tokens and tokenization_counts[token] != 0:
-            if last_special_token_pointer < len(idx_special_tokens):
-                while (
-                    last_special_token_pointer < len(idx_special_tokens)
-                    and counter == idx_special_tokens[last_special_token_pointer]
-                ):
-                    assert prev_token_type != "DROPPED", (
-                        "A token dropped by the tokenizer appeared next "
-                        + "to a special token. Detokenizer cannot resolve "
-                        + f"the ambiguity, please remove '{sentence}' from"
-                        + "the dataset, or try a different tokenizer"
-                    )
-                    prev_token_type = "SPECIAL"
-                    final_hidden_states[:, len(detokenized), :] = all_hidden_states[
-                        :, counter, :
-                    ]
-                    detokenized.append(
-                        segmented_tokens[idx_special_tokens[last_special_token_pointer]]
-                    )
-                    last_special_token_pointer += 1
-                    counter += 1
-
         current_word_start_idx = counter
         current_word_end_idx = counter + tokenization_counts[token]
 
         # Check for truncated hidden states in the case where the
         # original word was actually tokenized
-        if (
-            tokenization_counts[token] != 0
-            and current_word_start_idx >= all_hidden_states.shape[1]
-        ) or current_word_end_idx > all_hidden_states.shape[1]:
-            final_hidden_states = final_hidden_states[
-                :,
-                : len(detokenized)
-                + len(special_token_ids)
-                - last_special_token_pointer,
-                :,
-            ]
+        if  (tokenization_counts[token] != 0 and current_word_start_idx >= all_hidden_states.shape[1]) \
+                or current_word_end_idx > all_hidden_states.shape[1]:
+            final_hidden_states = final_hidden_states[:, :len(detokenized), :]
             inputs_truncated = True
             break
-
-        if tokenization_counts[token] == 0:
-            assert prev_token_type != "SPECIAL", (
-                "A token dropped by the tokenizer appeared next "
-                + "to a special token. Detokenizer cannot resolve "
-                + f"the ambiguity, please remove '{sentence}' from"
-                + "the dataset, or try a different tokenizer"
-            )
-            prev_token_type = "DROPPED"
-        else:
-            prev_token_type = "NORMAL"
 
         final_hidden_states[:, len(detokenized), :] = aggregate_repr(
             all_hidden_states,
@@ -375,224 +234,104 @@ def extract_sentence_representations(
         )
         counter += tokenization_counts[token]
 
-    if include_special_tokens:
-        while counter < len(segmented_tokens):
-            if last_special_token_pointer >= len(idx_special_tokens):
-                break
-
-            if counter == idx_special_tokens[last_special_token_pointer]:
-                assert prev_token_type != "DROPPED", (
-                    "A token dropped by the tokenizer appeared next "
-                    + "to a special token. Detokenizer cannot resolve "
-                    + f"the ambiguity, please remove '{sentence}' from"
-                    + "the dataset, or try a different tokenizer"
-                )
-                prev_token_type = "SPECIAL"
-                final_hidden_states[:, len(detokenized), :] = all_hidden_states[
-                    :, counter, :
-                ]
-                detokenized.append(
-                    segmented_tokens[idx_special_tokens[last_special_token_pointer]]
-                )
-                last_special_token_pointer += 1
-            counter += 1
-
     print("Detokenized (%03d): %s" % (len(detokenized), detokenized))
     print("Counter: %d" % (counter))
 
     if inputs_truncated:
         print("WARNING: Input truncated because of length, skipping check")
     else:
-        assert counter == len(filtered_ids)
-        assert len(detokenized) == len(original_tokens) + len(special_token_ids)
+        assert counter == len(ids_without_special_tokens)
+        assert len(detokenized) == len(original_tokens)
     print("===================================================================")
+
     return final_hidden_states, detokenized
 
 
 def extract_representations(
-    model_desc,
-    input_corpus,
+    model,
+    input_tokens_list,  # List of tokenized input lists
     output_file,
     device="cpu",
-    aggregation="last",
     output_type="json",
-    random_weights=False,
-    ignore_embeddings=False,
     decompose_layers=False,
     filter_layers=None,
-    dtype="float32",
-    include_special_tokens=False,
 ):
-    """
-    Extract representations for an entire corpus and save them to disk
-
-    Parameters
-    ----------
-    model_desc : str
-        Model description; can either be a model name like ``bert-base-uncased``,
-        a comma separated list indicating <model>,<tokenizer> (since 1.0.8),
-        or a path to a trained model
-
-    input_corpus : str
-        Path to the input corpus, where each sentence is on its separate line
-
-    output_file : str
-        Path to output file. Supports all filetypes supported by
-        ``data.writer.ActivationsWriter``.
-
-    device : str, optional
-        Specifies the device (CPU/GPU) on which the extraction should be
-        performed. Defaults to 'cpu'
-
-    aggregation : {'first', 'last', 'average'}, optional
-        Aggregation method for combining subword activations. Defaults to 'last'
-
-    output_type : str, optional
-        Explicit definition of output file type if it cannot be derived from the
-        ``output_file`` path
-
-    random_weights : bool, optional
-        Whether the weights of the model should be randomized. Useful for analyses
-        where one needs an untrained model. Defaults to False.
-
-    ignore_embeddings : bool, optional
-        Whether the embedding layer should be excluded in the final output, or
-        kept with the regular layers. Defaults to False
-
-    decompose_layers : bool, optional
-        Whether each layer should have it's own output file, or all layers be saved
-        in a single file. Defaults to False, i.e. single file
-
-    filter_layers : str
-        Comma separated list of layer indices to save. The format is the same as
-        the one accepted by ``data.writer.ActivationsWriter``.
-
-    dtype : str, optional
-        Data type in which the activations will be stored. Supports all numpy
-        based tensor types. Common values are 'float32' and 'float16'. Defaults
-        to 'float16'
-
-    include_special_tokens : bool, optional
-        Whether or not to special tokens in the extracted representations.
-        Special tokens are tokens not present in the original sentence, but are
-        added by the tokenizer, such as [CLS], [SEP] etc.
-    """
-    print(f"Loading model: {model_desc}")
-    model, tokenizer = get_model_and_tokenizer(
-        model_desc, device=device, random_weights=random_weights
-    )
-
-    print("Reading input corpus")
-
-    def corpus_generator(input_corpus_path):
-        with open(input_corpus_path, "r") as fp:
-            for line in fp:
-                yield line.strip()
-            return
-
-    print("Preparing output file")
+    print("📤 Saving activations to file")
     writer = ActivationsWriter.get_writer(
         output_file,
         filetype=output_type,
         decompose_layers=decompose_layers,
         filter_layers=filter_layers,
-        dtype=dtype,
     )
 
-    print("Extracting representations from model")
-    tokenization_counts = {}  # Cache for tokenizer rules
-    for sentence_idx, sentence in enumerate(corpus_generator(input_corpus)):
-        hidden_states, extracted_words = extract_sentence_representations(
-            sentence,
-            model,
-            tokenizer,
-            device=device,
-            include_embeddings=(not ignore_embeddings),
-            aggregation=aggregation,
-            dtype=dtype,
-            include_special_tokens=include_special_tokens,
-            tokenization_counts=tokenization_counts,
+    print("🔄 Extracting CLS token representations from all hidden layers")
+    for sentence_idx, token_list in enumerate(input_tokens_list):
+        input_ids = torch.tensor([token_list]).to(device)  # (1, seq_len)
+
+        with torch.no_grad():
+            outputs = model(input_ids, output_hidden_states=True)
+            hidden_states = outputs.hidden_states[1:]  # Skip embedding layer
+
+        hidden_states = torch.stack(hidden_states).squeeze(1)  # (num_layers, seq_len, hidden_dim)
+
+        cls_hidden_states = hidden_states[:, 0, :]            # (num_layers, hidden_dim)
+        cls_hidden_states = cls_hidden_states.unsqueeze(1)   # (num_layers, 1, hidden_dim)
+
+        writer.write_activations(
+            sentence_idx,
+            ["[CLS]"],
+            cls_hidden_states.cpu().numpy()
         )
 
-        print("Hidden states: ", hidden_states.shape)
-        print("# Extracted words: ", len(extracted_words))
-
-        writer.write_activations(sentence_idx, extracted_words, hidden_states)
+        print(f"✅ Sample {sentence_idx}: CLS activations extracted with shape {cls_hidden_states.shape}")
 
     writer.close()
+    print(f"✅ Activations saved to {output_file}")
+
+
+
 
 
 HDF5_SPECIAL_TOKENS = {".": "__DOT__", "/": "__SLASH__"}
 
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("model_desc", help="Name of model")
-    parser.add_argument(
-        "input_corpus", help="Text file path with one sentence per line"
-    )
-    parser.add_argument(
-        "output_file",
-        help="Output file path where extracted representations will be stored",
-    )
-    parser.add_argument(
-        "--aggregation",
-        help="first, last or average aggregation for word representation in the case of subword segmentation",
-        default="last",
-    )
-    parser.add_argument(
-        "--dtype",
-        choices=["float16", "float32"],
-        default="float32",
-        help="Output dtype of the extracted representations",
-    )
-    parser.add_argument("--disable_cuda", action="store_true")
-    parser.add_argument("--ignore_embeddings", action="store_true")
-    parser.add_argument(
-        "--random_weights",
-        action="store_true",
-        help="generate representations from randomly initialized model",
-    )
-    parser.add_argument(
-        "--include_special_tokens",
-        action="store_true",
-        help="Include special tokens like [CLS] and [SEP] in the extracted representations",
-    )
+    parser.add_argument("model_desc", help="Model name or path")
+    parser.add_argument("input_csv", help="CSV file with input_ids")
+    parser.add_argument("output_file", help="Output file for activations")
+    parser.add_argument("--disable_cuda", action="store_true", help="Force CPU even if CUDA is available")
+    parser.add_argument("--random_weights", action="store_true", help="Skip loading weights")
 
     ActivationsWriter.add_writer_options(parser)
-
     args = parser.parse_args()
 
-    assert args.aggregation in [
-        "average",
-        "first",
-        "last",
-    ], "Invalid aggregation option, please specify first, average or last."
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.disable_cuda else "cpu")
 
-    assert not (
-        args.filter_layers is not None and args.ignore_embeddings is True
-    ), "--filter_layers and --ignore_embeddings cannot be used at the same time"
+    print(f"📥 Loading model from {args.model_desc}")
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_desc, num_labels=5)
+    
+    weights_path = "/home/kikay/LLM_Syscalls/best_model_BigBird.pth"
+    print(f"🔄 Loading weights from {weights_path}")
+    state_dict = torch.load(weights_path, map_location="cpu")
+    model.load_state_dict(state_dict, strict=False)
 
-    if not args.disable_cuda and torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
+    model.to(device)
+    model.eval()
+    print("✅ Model loaded and ready")
+
+    print(f"📥 Loading data from {args.input_csv}")
+    df = pd.read_csv(args.input_csv)
+    df['input_ids'] = df['input_ids'].apply(lambda x: list(map(int, x.strip("[]").split(","))))
+    print("✅ Data loaded successfully")
 
     extract_representations(
-        args.model_desc,
-        args.input_corpus,
+        model,
+        df["input_ids"].tolist(),
         args.output_file,
         device=device,
-        aggregation=args.aggregation,
-        output_type=args.output_type,
-        random_weights=args.random_weights,
-        ignore_embeddings=args.ignore_embeddings,
-        dtype=args.dtype,
+        output_type=args.output_filetype,
         decompose_layers=args.decompose_layers,
-        filter_layers=args.filter_layers,
-        include_special_tokens=args.include_special_tokens,
+        filter_layers=args.filter_layers
     )
 
-
-if __name__ == "__main__":
-    main()
+    print(f"✅ Activations extracted and saved to {args.output_file}")

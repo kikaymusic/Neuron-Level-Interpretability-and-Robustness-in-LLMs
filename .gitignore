@@ -23,3 +23,7 @@ dist
 venv
 .venv
 docs/*.rst
+
+data/
+*.pth
+*.csv

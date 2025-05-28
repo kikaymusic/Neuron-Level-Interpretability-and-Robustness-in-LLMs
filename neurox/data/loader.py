@@ -10,6 +10,7 @@ import h5py
 import numpy as np
 import torch
 
+import pandas as pd
 
 def load_activations(
     activations_path, num_neurons_per_layer=None, is_brnn=False, dtype=None
@@ -378,184 +379,130 @@ def load_data(
     source_path,
     labels_path,
     activations,
-    max_sent_l,
+    max_sent_l=40000,
     ignore_start_token=False,
-    sentence_classification=False,
+    sentence_classification=True,
 ):
-    """Load word-annotated text-label pairs data represented as sentences. This
-    function loads the source text, target labels, and activations and tries to
-    make them perfectly parallel, i.e. number of tokens in line N of source would
-    match the number of tokens in line N of target, and also match the number of
-    activations at index N. The method will delete non-matching activation/source/target
-    pairs, up to a maximum of 100 before failing. The method will also ignore
-    sentences longer than the provided maximum. The activations will be modified
-    in place.
+    """Load token sequences with single labels for sentence classification.
 
+    Adapted for system call sequence classification where each sequence has one label.
+    
     Parameters
     ----------
     source_path : str
-        Path to the source text file, one sentence per line
+        Path to the CSV file containing token sequences.
     labels_path : str
-        Path to the annotated labels file, one sentence per line corresponding to
-        the sentences in the ``source_path`` file.
+        Path to the file with one label per sequence.
     activations : list of numpy.ndarray
         Activations returned from ``loader.load_activations``
     max_sent_l : int
-        Maximum length of sentences. Sentences containing more tokens will be
-        ignored.
+        Maximum number of tokens per sequence.
     ignore_start_token : bool, optional
-        Ignore the first token. Useful if there is some line position markers
-        in the source text.
+        Ignore the first token if necessary.
     sentence_classification : bool, optional
-        Flag to indicate if this is a sentence classification task, where every
-        sentence actually has only a single activation (e.g. [CLS] token's
-        activations in the case of BERT)
+        If True, ensures one label per sequence.
 
     Returns
     -------
     tokens : dict
-        Dictionary containing two lists, ``source`` and ``target``. ``source``
-        contains all of the sentences from ``source_path`` that were not ignored.
-        ``target`` contains the parallel set of annotated labels.
-
+        Dictionary with `source`, `target`, and `activations` aligned.
     """
     tokens = {"source": [], "target": []}
 
-    with open(source_path) as source_fp:
-        for line_idx, line in enumerate(source_fp):
-            line_tokens = line.strip().split()
-            if len(line_tokens) > max_sent_l:
-                continue
-            if ignore_start_token:
-                line_tokens = line_tokens[1:]
-                activations[line_idx] = activations[line_idx][1:, :]
-            tokens["source"].append(line_tokens)
-
+    df = pd.read_csv(source_path)
+    
+    # Load labels
     with open(labels_path) as labels_fp:
-        for line in labels_fp:
-            line_tokens = line.strip().split()
-            if len(line_tokens) > max_sent_l:
-                continue
-            if ignore_start_token:
-                line_tokens = line_tokens[1:]
-            tokens["target"].append(line_tokens)
+        labels = [line.strip() for line in labels_fp]
+    
+    assert len(df) == len(labels), "Mismatch between token sequences and labels."
+    assert len(activations) == len(df), "Mismatch between activations and token sequences."
 
-    assert len(tokens["source"]) == len(
-        tokens["target"]
-    ), "Number of lines do not match (source: %d, target: %d)!" % (
-        len(tokens["source"]),
-        len(tokens["target"]),
-    )
+    for idx, row in df.iterrows():
+        line_tokens = list(map(int, row["input_ids"].strip("[]").split(",")))
+        if len(line_tokens) > max_sent_l:
+            line_tokens = line_tokens[:max_sent_l]
 
-    assert len(activations) == len(
-        tokens["source"]
-    ), "Number of lines do not match (activations: %d, source: %d)!" % (
-        len(activations),
-        len(tokens["source"]),
-    )
+        tokens["source"].append(line_tokens)
+        tokens["target"].append(labels[idx])  # One label per sequence
 
-    # Check if all data is well formed (whether we have activations + labels for
-    # each and every word)
+    # Validate activations alignment
     invalid_activation_idx = []
     for idx, activation in enumerate(activations):
-        if activation.shape[0] == len(tokens["source"][idx]) and (
-            sentence_classification or activation.shape[0] == len(tokens["target"][idx])
-        ):
-            pass
-        else:
-            invalid_activation_idx.append(idx)
-            print("Skipping line: ", idx)
-            print(
-                "A: %d, S: %d, T: %d"
-                % (
-                    activation.shape[0],
-                    len(tokens["source"][idx]),
-                    len(tokens["target"][idx]),
-                )
-            )
+        if sentence_classification:
+            if activation.shape[0] != len(tokens["source"][idx]):
+                invalid_activation_idx.append(idx)
+                print(f"Skipping sequence {idx} due to length mismatch.")
 
-    assert len(invalid_activation_idx) < 100, (
-        "Too many mismatches (%d) - your paths are probably incorrect or something is wrong in the data!"
-        % (len(invalid_activation_idx))
-    )
-
+    assert len(invalid_activation_idx) < 100, "Too many mismatches, check data consistency."
+    
     for num_deleted, idx in enumerate(invalid_activation_idx):
-        print(
-            "Deleting line %d: %d activations, %d source, %d target"
-            % (
-                idx - num_deleted,
-                activations[idx - num_deleted].shape[0],
-                len(tokens["source"][idx - num_deleted]),
-                len(tokens["target"][idx - num_deleted]),
-            )
-        )
+        print(f"Deleting sequence {idx - num_deleted}")
         del activations[idx - num_deleted]
         del tokens["source"][idx - num_deleted]
         del tokens["target"][idx - num_deleted]
-
-    for idx, activation in enumerate(activations):
-        assert activation.shape[0] == len(tokens["source"][idx])
-        if not sentence_classification:
-            assert activation.shape[0] == len(tokens["target"][idx])
-
-    # TODO: Return activations
+    
     return tokens
 
 
 def load_sentence_data(source_path, labels_path, activations):
-    """Loads sentence-annotated text-label pairs. This function loads the source
-    text, target labels, and activations and tries to make them perfectly
-    parallel, i.e. number of tokens in line N of source would
-    match the number of activations at index N. The method will delete
-    non-matching activation/source pairs. The activations will be modified
-    in place.
-
+    """Loads sequences with single labels.
+    
+    Adapted for system call sequence classification where each sequence has one label.
+    
     Parameters
     ----------
     source_path : str
-        Path to the source text file, one sentence per line
+        Path to the CSV file containing token sequences.
     labels_path : str
-        Path to the annotated labels file, one sentence per line corresponding to
-        the sentences in the ``source_path`` file.
+        Path to the file with one label per sequence.
     activations : list of numpy.ndarray
         Activations returned from ``loader.load_activations``
 
     Returns
     -------
     tokens : dict
-        Dictionary containing two lists, ``source`` and ``target``. ``source``
-        contains all of the sentences from ``source_path`` that were not ignored.
-        ``target`` contains the parallel set of annotated labels.
-
+        Dictionary containing `source`, `target`, and `activations` aligned.
     """
     tokens = {"source": [], "target": []}
 
-    with open(source_path) as source_fp:
-        for line_idx, line in enumerate(source_fp):
-            tokens["source"].append(["sentence_%d" % (line_idx)])
-
+    df = pd.read_csv(source_path)
+    
+    # Load labels
     with open(labels_path) as labels_fp:
-        for line in labels_fp:
-            line_tokens = line.strip().split()
-            tokens["target"].append(line_tokens)
+        labels = [line.strip() for line in labels_fp]
+    
+    assert len(df) == len(labels), "Mismatch between token sequences and labels."
+    assert len(activations) == len(df), "Mismatch between activations and token sequences."
 
-    assert len(tokens["source"]) == len(
-        tokens["target"]
-    ), "Number of lines do not match (source: %d, target: %d)!" % (
-        len(tokens["source"]),
-        len(tokens["target"]),
-    )
-
-    assert len(activations) == len(
-        tokens["source"]
-    ), "Number of lines do not match (activations: %d, source: %d)!" % (
-        len(activations),
-        len(tokens["source"]),
-    )
-
-    # Check if all data is well formed (whether we have activations + labels for
-    # each and every word)
-    for idx, activation in enumerate(activations):
-        assert activation.shape[0] == len(tokens["source"][idx])
-
+    for idx, row in df.iterrows():
+        tokens["source"].append(f"sequence_{idx}")
+        tokens["target"].append(labels[idx])  # One label per sequence
+    
     return tokens
+
+
+def convert_labels_to_numeric(labels_file, output_file):
+    """Convierte etiquetas en formato de ruta a valores numéricos y guarda el resultado."""
+    
+    with open(labels_file, "r") as f:
+        raw_labels = [line.strip() for line in f]
+
+    # Extraer solo el nombre de la carpeta (última parte de la ruta)
+    clean_labels = [os.path.basename(label) for label in raw_labels]
+
+    # Crear un diccionario único de etiquetas y mapear a números
+    unique_labels = sorted(set(clean_labels))
+    label_mapping = {label: idx + 1 for idx, label in enumerate(unique_labels)}
+
+    # Convertir etiquetas en números
+    numeric_labels = [label_mapping[label] for label in clean_labels]
+
+    # Guardar etiquetas numéricas en un archivo
+    with open(output_file, "w") as f:
+        for num_label in numeric_labels:
+            f.write(f"{num_label}\n")
+
+    print("✅ Etiquetas convertidas y guardadas en:", output_file)
+    print("📄 Mapeo de etiquetas:", label_mapping)
+    return label_mapping

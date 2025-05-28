@@ -62,17 +62,11 @@ class ActivationsWriter:
     """
 
     def __init__(
-        self,
-        filename,
-        filetype=None,
-        decompose_layers=False,
-        filter_layers=None,
-        dtype="float32",
+        self, filename, filetype=None, decompose_layers=False, filter_layers=None
     ):
         self.filename = filename
         self.decompose_layers = decompose_layers
         self.filter_layers = filter_layers
-        self.dtype = dtype
 
     def open(self):
         """
@@ -90,16 +84,10 @@ class ActivationsWriter:
         raise NotImplementedError("Use a specific writer or the `get_writer` method.")
 
     @staticmethod
-    def get_writer(
-        filename,
-        filetype=None,
-        decompose_layers=False,
-        filter_layers=None,
-        dtype="float32",
-    ):
+    def get_writer(filename, filetype=None, decompose_layers=False, filter_layers=None):
         """Method to get the correct writer based on filename and filetype"""
         return ActivationsWriterManager(
-            filename, filetype, decompose_layers, filter_layers, dtype=dtype
+            filename, filetype, decompose_layers, filter_layers
         )
 
     @staticmethod
@@ -135,19 +123,13 @@ class ActivationsWriterManager(ActivationsWriter):
     """
 
     def __init__(
-        self,
-        filename,
-        filetype=None,
-        decompose_layers=False,
-        filter_layers=None,
-        dtype="float32",
+        self, filename, filetype=None, decompose_layers=False, filter_layers=None
     ):
         super().__init__(
             filename,
             filetype=filetype,
             decompose_layers=decompose_layers,
             filter_layers=filter_layers,
-            dtype=dtype,
         )
 
         if filename.endswith(".hdf5") or filetype == "hdf5":
@@ -168,14 +150,12 @@ class ActivationsWriterManager(ActivationsWriter):
             self.layers = [int(l) for l in self.filter_layers.split(",")]
         if self.decompose_layers:
             for layer_idx in self.layers:
-                local_filename = (
-                    f"{self.filename[:-5]}-layer{layer_idx}.{self.filename[-4:]}"
-                )
-                _writer = self.base_writer(local_filename, dtype=self.dtype)
+                local_filename = f"{self.filename[:-5]}-layer{layer_idx}.{self.filename[-4:]}"
+                _writer = self.base_writer(local_filename)
                 _writer.open()
                 self.writers.append(_writer)
         else:
-            _writer = self.base_writer(self.filename, dtype=self.dtype)
+            _writer = self.base_writer(self.filename)
             _writer.open()
             self.writers.append(_writer)
 
@@ -199,8 +179,8 @@ class ActivationsWriterManager(ActivationsWriter):
 
 
 class HDF5ActivationsWriter(ActivationsWriter):
-    def __init__(self, filename, dtype="float32"):
-        super().__init__(filename, filetype="hdf5", dtype=dtype)
+    def __init__(self, filename):
+        super().__init__(filename, filetype="hdf5")
         if not self.filename.endswith(".hdf5"):
             raise ValueError(
                 f"Output filename ({self.filename}) does not end with .hdf5, but output file type is hdf5."
@@ -214,8 +194,9 @@ class HDF5ActivationsWriter(ActivationsWriter):
     def write_activations(self, sentence_idx, extracted_words, activations):
         if self.activations_file is None:
             self.open()
+
         self.activations_file.create_dataset(
-            str(sentence_idx), activations.shape, dtype=self.dtype, data=activations
+            str(sentence_idx), activations.shape, dtype="float32", data=activations
         )
 
         # TODO: Replace with better implementation with list of indices
@@ -237,13 +218,13 @@ class HDF5ActivationsWriter(ActivationsWriter):
 
 
 class JSONActivationsWriter(ActivationsWriter):
-    def __init__(self, filename, dtype="float32"):
+    def __init__(self, filename):
         super().__init__(filename, filetype="json")
         if not self.filename.endswith(".json"):
             raise ValueError(
                 f"Output filename ({self.filename}) does not end with .json, but output file type is json."
             )
-        self.dtype = dtype
+
         self.activations_file = None
 
     def open(self):
