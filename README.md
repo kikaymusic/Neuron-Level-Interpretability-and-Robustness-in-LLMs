@@ -57,7 +57,7 @@ This repository provides an end-to-end pipeline for:
 
 ---
 
-## Acknowledgements
+## 🧠 Acknowledgements
 
 This project is based on a fork of  [NeuroX](https://github.com/fdalvi/NeuroX), originally developed by the NeuroX team.
 
