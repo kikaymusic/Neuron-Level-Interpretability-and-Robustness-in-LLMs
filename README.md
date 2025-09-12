@@ -1,5 +1,5 @@
 # Framework-for-Neuron-Level-Interpretability-and-Robustness-in-LLMs
-![DisenoFinal drawio](https://github.com/user-attachments/assets/7b44d9f2-882b-41fb-bee3-4ac6a16f16ce)
+<img width="861" height="411" alt="PropuestaDiagramaFinal drawio" src="https://github.com/user-attachments/assets/53369546-47e0-474c-93a1-431367245e29" />
 
 
 > This framework applies explainability tools and adversarial‐attack techniques to test the robustness of Transformer-based models (LLMs) at the neuron level.
