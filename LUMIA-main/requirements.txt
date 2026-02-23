@@ -1,0 +1,11 @@
+numpy==1.26.4
+pandas==2.2.2
+tensorflow==2.18.0
+torch==2.4.1
+scikit-learn==1.4.2
+scipy==1.13.0
+transformers @ git+https://github.com/huggingface/transformers@653eb40425344b89b5a24e7b07eb3095b04cdc9d
+datasets
+matplotlib
+baukit @ git+https://github.com/davidbau/baukit@9d51abd51ebf29769aecc38c4cbef459b731a36e
+accelerate>=0.26.0

@@ -1,0 +1,11 @@
+{
+  "layer_id": 3,
+  "hidden_dim": 32,
+  "top_p": 0.1,
+  "top_k": 3,
+  "indices_global": [
+    103,
+    124,
+    127
+  ]
+}

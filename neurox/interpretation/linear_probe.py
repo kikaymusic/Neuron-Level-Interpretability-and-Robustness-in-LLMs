@@ -224,7 +224,7 @@ def train_logistic_regression_probe(
         of the vector must be [``NUM_TOKENS``].  Usually the output of
         ``interpretation.utils.create_tensors``. Assumes that class labels are
         continuous from ``0`` to ``NUM_CLASSES-1``. ``dtype`` of the
-        matrix must be ``np.int``
+        matrix must be ``int``
     lambda_l1 : float, optional
         L1 Penalty weight in the overall loss. Defaults to 0, i.e. no L1
         regularization
