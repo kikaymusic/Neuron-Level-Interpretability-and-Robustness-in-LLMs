@@ -12,7 +12,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 
-
 def lumia_layerwise_auc_from_activations(
     activations: np.ndarray,
     membership_labels: np.ndarray,
@@ -42,12 +41,12 @@ def lumia_layerwise_auc_from_activations(
     )
 
     y_train = y[idx_train]
-    y_test = y[idx_test]
+    y_test  = y[idx_test]
 
     rows = []
     for layer_id in range(L):
         X_train = A[idx_train, layer_id, :]
-        X_test = A[idx_test, layer_id, :]
+        X_test  = A[idx_test,  layer_id, :]
 
         clf = LogisticRegression(
             max_iter=2000,
@@ -57,7 +56,7 @@ def lumia_layerwise_auc_from_activations(
         clf.fit(X_train, y_train)
 
         proba = clf.predict_proba(X_test)[:, 1]
-        auc = roc_auc_score(y_test, proba)
+        auc   = roc_auc_score(y_test, proba)
         rows.append({"layer_id": int(layer_id), "auc": float(auc)})
 
     df_auc = pd.DataFrame(rows).sort_values("auc", ascending=False)
@@ -69,6 +68,73 @@ def lumia_layerwise_auc_from_activations(
 
     return df_auc, l_star
 
+def lumia_layerwise_auc_transfer(
+    activations_train: np.ndarray,
+    activations_eval: np.ndarray,
+    membership_labels: np.ndarray,
+    seed: int = 123,
+    test_size: float = 0.2,
+    out_csv: Optional[str] = None,
+) -> Tuple[pd.DataFrame, int]:
+    """
+    Evalúa la defensa con probe fijo entrenado en baseline.
+    
+    activations_train: [N, L, H] — A baseline, para entrenar el probe
+    activations_eval:  [N, L, H] — A_def, para evaluar el probe
+    membership_labels: [N] con 0/1
+
+    El probe aprende la señal de membership en la distribución original.
+    Luego se evalúa sobre las activaciones defendidas para ver si la
+    defensa consigue engañarlo.
+    """
+    A_tr = np.asarray(activations_train)
+    A_ev = np.asarray(activations_eval)
+    y    = np.asarray(membership_labels).astype(int)
+
+    if A_tr.shape != A_ev.shape:
+        raise ValueError(
+            f"Shape mismatch: activations_train {A_tr.shape} vs activations_eval {A_ev.shape}"
+        )
+    if A_tr.ndim != 3:
+        raise ValueError(f"Expected [N,L,H], got {A_tr.shape}")
+
+    N, L, _H = A_tr.shape
+
+    idx_all = np.arange(N)
+    idx_train, idx_test = train_test_split(
+        idx_all,
+        test_size=test_size,
+        random_state=seed,
+        stratify=y
+    )
+
+    y_train = y[idx_train]
+    y_test  = y[idx_test]
+
+    rows = []
+    for layer_id in range(L):
+        X_train = A_tr[idx_train, layer_id, :]   # baseline → entrena probe
+        X_test  = A_ev[idx_test,  layer_id, :]   # defended → evalúa probe
+
+        clf = LogisticRegression(
+            max_iter=2000,
+            solver="liblinear",
+            random_state=seed
+        )
+        clf.fit(X_train, y_train)
+
+        proba = clf.predict_proba(X_test)[:, 1]
+        auc   = roc_auc_score(y_test, proba)
+        rows.append({"layer_id": int(layer_id), "auc": float(auc)})
+
+    df_auc = pd.DataFrame(rows).sort_values("auc", ascending=False)
+    l_star = int(df_auc.iloc[0]["layer_id"])
+
+    if out_csv is not None:
+        os.makedirs(os.path.dirname(out_csv), exist_ok=True)
+        df_auc.to_csv(out_csv, index=False)
+
+    return df_auc, l_star
 
 def lumia_neuron_ranking_and_mask_from_layer(
     activations: np.ndarray,

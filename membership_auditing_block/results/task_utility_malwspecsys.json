@@ -1,0 +1,470 @@
+{
+  "run_ts": "20260513_025941",
+  "n_per_class": 10,
+  "n_total": 50,
+  "metric": "weighted_f1",
+  "method": "full_forward_pass_with_recovered_hooks",
+  "baseline_f1": 0.9213640161008582,
+  "label_mapping": {
+    "0": "/cluster/raid/home/sape/MILCOM2024/MalwSpecSys/Dataset/Bashlite",
+    "1": "/cluster/raid/home/sape/MILCOM2024/MalwSpecSys/Dataset/Bdvl",
+    "2": "/cluster/raid/home/sape/MILCOM2024/MalwSpecSys/Dataset/Normal",
+    "3": "/cluster/raid/home/sape/MILCOM2024/MalwSpecSys/Dataset/RansomwarePoC",
+    "4": "/cluster/raid/home/sape/MILCOM2024/MalwSpecSys/Dataset/Thetick"
+  },
+  "top_p_values": [
+    0.001,
+    0.005,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+    0.4,
+    0.65,
+    0.8
+  ],
+  "results": [
+    {
+      "top_p": 0.001,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9213640161008582,
+      "e1_p3_n_neurons": 1,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9213640161008582,
+      "e2_p4a_n_neurons": 4,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 9,
+      "e3_p4b_hook_layers": [
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.9213640161008582,
+      "e4_rnd_n_neurons": 9,
+      "e4_rnd_hook_layers": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        11
+      ]
+    },
+    {
+      "top_p": 0.005,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9396825396825396,
+      "e1_p3_n_neurons": 4,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9213640161008582,
+      "e2_p4a_n_neurons": 16,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 46,
+      "e3_p4b_hook_layers": [
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.9213640161008582,
+      "e4_rnd_n_neurons": 46,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.01,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9396825396825396,
+      "e1_p3_n_neurons": 8,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9213640161008582,
+      "e2_p4a_n_neurons": 32,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 92,
+      "e3_p4b_hook_layers": [
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.9213640161008582,
+      "e4_rnd_n_neurons": 92,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.02,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9396825396825396,
+      "e1_p3_n_neurons": 15,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9213640161008582,
+      "e2_p4a_n_neurons": 60,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 184,
+      "e3_p4b_hook_layers": [
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.9396825396825396,
+      "e4_rnd_n_neurons": 184,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.05,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9396825396825396,
+      "e1_p3_n_neurons": 38,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9213640161008582,
+      "e2_p4a_n_neurons": 152,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 461,
+      "e3_p4b_hook_layers": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.9396825396825396,
+      "e4_rnd_n_neurons": 461,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.1,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9396825396825396,
+      "e1_p3_n_neurons": 77,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9408521303258145,
+      "e2_p4a_n_neurons": 308,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.9213640161008582,
+      "e3_p4b_n_neurons": 922,
+      "e3_p4b_hook_layers": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.8841795665634674,
+      "e4_rnd_n_neurons": 922,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.2,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.9408521303258145,
+      "e1_p3_n_neurons": 154,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.9408521303258145,
+      "e2_p4a_n_neurons": 616,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.8396582633053222,
+      "e3_p4b_n_neurons": 1843,
+      "e3_p4b_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.8801118738876176,
+      "e4_rnd_n_neurons": 1843,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.4,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.8969979296066254,
+      "e1_p3_n_neurons": 307,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.8786749482401656,
+      "e2_p4a_n_neurons": 1228,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.8331550802139037,
+      "e3_p4b_n_neurons": 3686,
+      "e3_p4b_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.8355555555555556,
+      "e4_rnd_n_neurons": 3686,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.65,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.8756038647342996,
+      "e1_p3_n_neurons": 499,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.825976535541753,
+      "e2_p4a_n_neurons": 1996,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.38020274299344065,
+      "e3_p4b_n_neurons": 5990,
+      "e3_p4b_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.7292929292929293,
+      "e4_rnd_n_neurons": 5990,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "top_p": 0.8,
+      "baseline_weighted_f1": 0.9213640161008582,
+      "e1_p3_weighted_f1": 0.5600845391167971,
+      "e1_p3_n_neurons": 614,
+      "e1_p3_hook_layers": [
+        10
+      ],
+      "e2_p4a_weighted_f1": 0.634086203651421,
+      "e2_p4a_n_neurons": 2456,
+      "e2_p4a_hook_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "e3_p4b_weighted_f1": 0.2450592885375494,
+      "e3_p4b_n_neurons": 7373,
+      "e3_p4b_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "e4_rnd_weighted_f1": 0.6673160173160174,
+      "e4_rnd_n_neurons": 7373,
+      "e4_rnd_hook_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    }
+  ]
+}

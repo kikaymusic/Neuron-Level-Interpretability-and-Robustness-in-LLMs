@@ -27,3 +27,18 @@ docs/*.rst
 data/
 *.pth
 *.csv
+
+# Activaciones brutas (cientos de MB)
+activations_*.json
+A_def_*.json
+sweep_20260428_205017/A_def_*.json
+
+# Figuras generadas (artefactos)
+figs_sections/
+figs_per_experiment/
+figs_presentacion/
+figs_syn+lum/
+
+# MAB: figuras generadas y activaciones
+membership_auditing_block/figs_*/
+membership_auditing_block/results/activations_*.json

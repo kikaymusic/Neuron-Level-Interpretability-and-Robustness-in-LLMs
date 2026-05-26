@@ -839,3 +839,102 @@ def get_fixed_number_of_bottom_neurons(probe, num_bottom_neurons, class_to_idx):
     ordering, _ = get_neuron_ordering(probe, class_to_idx)
 
     return ordering[-num_bottom_neurons:]
+
+
+# ---------------------------------------------------------------------
+# Membership leakage helpers (binary AUC + exact top-k neurons)
+# ---------------------------------------------------------------------
+
+def evaluate_probe_auc_binary(
+    probe,
+    X,
+    y,
+    positive_class: int = 1,
+    batch_size: int = 32,
+):
+    """
+    Evaluate a trained probe with ROC-AUC for binary membership.
+
+    Inputs
+    - probe: LinearProbe (torch nn.Module)
+    - X: np.ndarray [N, D] float32
+    - y: np.ndarray [N] int (0/1)
+
+    Output
+    - auc: float
+    """
+    # Lazy import to avoid changing global imports of the module
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+    import torch
+    from torch.autograd import Variable
+
+    use_gpu = torch.cuda.is_available()
+    if use_gpu:
+        probe = probe.cuda()
+
+    y_true = []
+    y_score = []
+
+    for inputs, labels in utils.batch_generator(
+        torch.from_numpy(X), torch.from_numpy(y), batch_size=batch_size
+    ):
+        if use_gpu:
+            inputs = inputs.cuda()
+            labels = labels.cuda()
+
+        inputs = Variable(inputs)
+        with torch.no_grad():
+            logits = probe(inputs)  # [B, C]
+
+            # We assume binary classification implemented as C=2 logits
+            probs = torch.softmax(logits, dim=1)[:, positive_class]
+
+        y_true.append(labels.detach().cpu().numpy())
+        y_score.append(probs.detach().cpu().numpy())
+
+    y_true = np.concatenate(y_true).astype(int)
+    y_score = np.concatenate(y_score).astype(float)
+
+    return float(roc_auc_score(y_true, y_score))
+
+
+def get_top_k_neurons_binary(
+    probe,
+    k: int,
+    positive_class: int = 1,
+    return_scores: bool = False,
+):
+    """
+    Get exact top-k neurons for a binary probe using |w|.
+
+    Inputs
+    - probe: LinearProbe
+    - k: int (exact number of neurons)
+    - positive_class: which row of weight matrix to use (default 1 for "member")
+    - return_scores: if True, also return the scores for the selected indices
+
+    Outputs
+    - top_idx: List[int] length k, indices in [0, D-1]
+    - (optional) top_scores: List[float] length k
+    """
+    import numpy as np
+
+    W = probe.linear.weight.detach().cpu().numpy()  # [C, D]
+    if W.ndim != 2:
+        raise ValueError(f"Unexpected weight shape: {W.shape}")
+
+    if positive_class < 0 or positive_class >= W.shape[0]:
+        raise ValueError(f"positive_class={positive_class} out of range for W shape {W.shape}")
+
+    scores = np.abs(W[positive_class])  # [D]
+    rank = np.argsort(scores)[::-1]
+    top_idx = rank[: int(k)].astype(int).tolist()
+
+    if return_scores:
+        top_scores = scores[top_idx].astype(float).tolist()
+        return top_idx, top_scores
+
+    return top_idx
+
+
