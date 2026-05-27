@@ -6,7 +6,7 @@
 
 ---
 
-## 🚀 Description
+## Description
 
 This repository provides an end-to-end pipeline for:
 1. **Causal neuron analysis** – locate and quantify the importance of individual neurons in a Transformer classifier.  
@@ -15,7 +15,7 @@ This repository provides an end-to-end pipeline for:
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started
 
 1. **Create a Python 3.9 virtual environment**  
     ```bash
@@ -57,7 +57,7 @@ This repository provides an end-to-end pipeline for:
 
 ---
 
-## 🧠 Acknowledgements
+## Acknowledgements
 
 This project is based on a fork of  [NeuroX](https://github.com/fdalvi/NeuroX), originally developed by the NeuroX team.
 

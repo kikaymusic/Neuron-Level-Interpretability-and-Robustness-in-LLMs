@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 OUT = "figs_sections"
 os.makedirs(OUT, exist_ok=True)
 
-# ── Load data ──────────────────────────────────────────────────────────────
+# Load data
 with open("../results/sweep_results_malwspecsys.json") as f:
     mem = json.load(f)
 with open("../results/task_utility_malwspecsys.json") as f:
@@ -59,7 +59,7 @@ COLORS = {
 }
 
 
-# ── Helper: dual-axis AUC + F1 ─────────────────────────────────────────────
+# Helper: dual-axis AUC + F1
 def draw_dual(auc_vals, f1_vals, color, title, fname, sp_label, sp_offset=0.9):
     fig, ax1 = plt.subplots(figsize=(8, 5))
     ax2 = ax1.twinx()

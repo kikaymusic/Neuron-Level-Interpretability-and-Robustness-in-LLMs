@@ -26,7 +26,7 @@ import matplotlib.ticker as ticker
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
-# ── Datos ──────────────────────────────────────────────────────────────────
+# Datos
 with open('../results/sweep_results_malwspecsys.json') as f:
     sweep = json.load(f)
 
@@ -44,7 +44,7 @@ BASE_TPR      = next(r for r in results if r['top_p'] == 0.001)['e4_rnd_tpr_at_f
 OUT = 'figs_per_experiment'
 os.makedirs(OUT, exist_ok=True)
 
-# ── Helpers ────────────────────────────────────────────────────────────────
+# Helpers
 def parse_layer_auc(row, prefix):
     """Devuelve lista ordenada L0..L11 con el AUC del probe en esa capa."""
     d = json.loads(row[f'{prefix}_auc_per_layer'])
@@ -107,7 +107,7 @@ def draw_heatmap(ax, matrix, prefix, title):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# E2 — Single-layer suppression (l*=L11)
+# E2 - Single-layer suppression (l*=L11)
 # Historia: L11 se suprime pero L10 absorbe la señal
 # ══════════════════════════════════════════════════════════════════════════
 mat_e1 = build_matrix('e1_p3')
@@ -115,7 +115,7 @@ mat_e1 = build_matrix('e1_p3')
 fig, (ax_h, ax_r) = plt.subplots(1, 2, figsize=(13, 5))
 
 draw_heatmap(ax_h, mat_e1, 'e1_p3',
-             'E2 — Per-layer AUC\n(white dot = best layer for the attacker)')
+             'E2 - Per-layer AUC\n(white dot = best layer for the attacker)')
 
 # Panel derecho: L11 vs L10 como top_p sube
 l11_auc = [parse_layer_auc(r, 'e1_p3')[11] for r in results]
@@ -127,13 +127,13 @@ ax_r.axhline(BASE_AUC, color='#1565C0', linestyle='--', linewidth=1.5,
 ax_r.plot(xi, l11_auc, 'o--', color=COL['e1'], linewidth=2.2, markersize=7,
           label='L11  (defended)')
 ax_r.plot(xi, l10_auc, 's-',  color='#C62828', linewidth=2.2, markersize=7,
-          label='L10  (undefended — absorbs signal)')
+          label='L10  (undefended - absorbs signal)')
 ax_r.set_xticks(xi)
 ax_r.set_xticklabels(x_labs, rotation=40, ha='right', fontsize=9)
 ax_r.set_xlabel('top_p', fontsize=10)
 ax_r.set_ylabel('MIA AUC', fontsize=10)
 ax_r.set_ylim(0.50, 1.02)
-ax_r.set_title('E2 — Layer shift: L11 ↓  but  L10 compensates',
+ax_r.set_title('E2 - Layer shift: L11 ↓  but  L10 compensates',
                fontsize=11, fontweight='bold')
 ax_r.legend(fontsize=10)
 ax_r.grid(True, alpha=0.3)
@@ -147,7 +147,7 @@ print('Saved: E2_single_layer.pdf')
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# E3 — Four-layer suppression
+# E3 - Four-layer suppression
 # Historia: el suelo del atacante se desplaza a L7
 # ══════════════════════════════════════════════════════════════════════════
 mat_e2 = build_matrix('e2_p4a')
@@ -155,7 +155,7 @@ mat_e2 = build_matrix('e2_p4a')
 fig, (ax_h, ax_r) = plt.subplots(1, 2, figsize=(13, 5))
 
 im = draw_heatmap(ax_h, mat_e2, 'e2_p4a',
-                  'E3 — Per-layer AUC\n(L8–L11 defended; L7 becomes the floor)')
+                  'E3 - Per-layer AUC\n(L8–L11 defended; L7 becomes the floor)')
 
 # Marcar visualmente las capas defendidas con líneas en el eje Y
 for defended_l in [8, 9, 10, 11]:
@@ -181,7 +181,7 @@ ax_r.set_xticklabels(x_labs, rotation=40, ha='right', fontsize=9)
 ax_r.set_xlabel('top_p', fontsize=10)
 ax_r.set_ylabel('Best MIA AUC', fontsize=10)
 ax_r.set_ylim(0.80, 1.02)
-ax_r.set_title('E3 vs E2 — Attack retreats to L7\n(first undefended layer)',
+ax_r.set_title('E3 vs E2 - Attack retreats to L7\n(first undefended layer)',
                fontsize=11, fontweight='bold')
 ax_r.legend(fontsize=10, loc='lower left')
 ax_r.grid(True, alpha=0.3)
@@ -195,7 +195,7 @@ print('Saved: E3_four_layers.pdf')
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# E4 — Global suppression
+# E4 - Global suppression
 # Historia: cascade collapse + TPR@1%FPR → 0 al sweet spot
 # ══════════════════════════════════════════════════════════════════════════
 mat_e3 = build_matrix('e3_p4b')
@@ -216,7 +216,7 @@ ax_h.set_xlabel('top_p', fontsize=10)
 ax_h.set_yticks(LAYERS)
 ax_h.set_yticklabels(l_labs, fontsize=9)
 ax_h.set_ylabel('Transformer layer', fontsize=10)
-ax_h.set_title('E4 — Per-layer AUC\n(cascade collapse from L11 downward)',
+ax_h.set_title('E4 - Per-layer AUC\n(cascade collapse from L11 downward)',
                fontsize=11, fontweight='bold')
 for xi_i, bl in enumerate(best_layer_per_tp('e3_p4b')):
     ax_h.plot(xi_i, bl, 'wo', markersize=5, markeredgecolor='k',
@@ -227,7 +227,7 @@ cb = plt.colorbar(sm, ax=ax_h, fraction=0.046, pad=0.04)
 cb.set_label('MIA AUC', fontsize=9)
 cb.ax.tick_params(labelsize=8)
 
-# Panel derecho: TPR@1%FPR — el resultado operacional
+# Panel derecho: TPR@1%FPR - el resultado operacional
 xi = np.arange(len(TOP_P))
 sp = TOP_P.index(0.4)
 
@@ -256,7 +256,7 @@ ax_r2.set_ylabel('Task weighted F1', color='#9C27B0', fontsize=10)
 ax_r.set_ylim(-0.005, 0.18)
 ax_r2.set_ylim(0.0, 1.3)
 ax_r2.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-ax_r.set_title('E4 — Operational privacy risk\nvs task utility', fontsize=11, fontweight='bold')
+ax_r.set_title('E4 - Operational privacy risk\nvs task utility', fontsize=11, fontweight='bold')
 ax_r.grid(True, alpha=0.3)
 ax_r.spines['top'].set_visible(False)
 
@@ -271,8 +271,8 @@ print('Saved: E4_global.pdf')
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# E1 — Random control
-# Historia: mismo k que E4 pero al azar — la selección importa
+# E1 - Random control
+# Historia: mismo k que E4 pero al azar - la selección importa
 # ══════════════════════════════════════════════════════════════════════════
 mat_e4 = build_matrix('e4_rnd')
 e3_best = serie('e3_p4b_best_auc_def')
@@ -335,7 +335,7 @@ ax.set_xticklabels(x_labs, rotation=40, ha='right', fontsize=9)
 ax.set_xlabel('top_p', fontsize=10)
 ax.set_ylabel('TPR at 1% FPR', fontsize=10)
 ax.set_ylim(-0.005, 0.25)
-ax.set_title('E4 vs E1 — TPR@1%FPR\n(same k, different selection)',
+ax.set_title('E4 vs E1 - TPR@1%FPR\n(same k, different selection)',
              fontsize=11, fontweight='bold')
 ax.legend(fontsize=10)
 ax.grid(True, alpha=0.3)

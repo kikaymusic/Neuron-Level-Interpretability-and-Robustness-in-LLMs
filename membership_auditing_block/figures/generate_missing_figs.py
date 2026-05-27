@@ -58,7 +58,7 @@ OUT_G = "../figs_syn+lum"
 os.makedirs(OUT_P, exist_ok=True)
 os.makedirs(OUT_G, exist_ok=True)
 
-# ── Load data ─────────────────────────────────────────────────────────────────
+# Load data
 with open("../results/sweep_results_malwspecsys.json") as f:
     mem = json.load(f)
 
@@ -102,9 +102,9 @@ sp = TOP_P.index(0.4)
 e4_mat = np.array([layer_auc(r, "e3_p4b") for r in mem["results"]])
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P05_e4_cascade — cascade collapse + TPR sweet spot
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P05_e4_cascade - cascade collapse + TPR sweet spot
+# ---
 SHOW_P = [0.001, 0.05, 0.2, 0.4, 0.65, 0.8]
 show_idx = [TOP_P.index(p) for p in SHOW_P]
 colors_cascade = plt.cm.Blues(np.linspace(0.35, 0.95, len(SHOW_P)))
@@ -148,9 +148,9 @@ plt.close()
 print("✓ P05_e4_cascade.pdf")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P07_e4_vs_e1 — E4 (informed) vs E1 (random) at top_p=0.4, 3 panels
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P07_e4_vs_e1 - E4 (informed) vs E1 (random) at top_p=0.4, 3 panels
+# ---
 e4_vals = [e4_auc[sp], e4_tpr[sp], e4_f1[sp]]
 e1_vals = [e1_auc[sp], e1_tpr[sp], e1_f1[sp]]
 ylims   = [(0.60, 0.92), (0.0, 0.14), (0.70, 1.00)]
@@ -191,9 +191,9 @@ plt.close()
 print("✓ P07_e4_vs_e1.pdf")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P08_comparative — AUC sweep + F1 sweep, all 4 conditions
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P08_comparative - AUC sweep + F1 sweep, all 4 conditions
+# ---
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
 for ax, series, ylabel, title, base, ylim in [
@@ -224,9 +224,9 @@ plt.close()
 print("✓ P08_comparative.pdf")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P09_summary_dashboard — 5-panel key results
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P09_summary_dashboard - 5-panel key results
+# ---
 fig = plt.figure(figsize=(16, 10))
 
 gs = gridspec.GridSpec(2, 3, figure=fig, hspace=0.45, wspace=0.35)
@@ -296,9 +296,9 @@ plt.close()
 print("✓ P09_summary_dashboard.pdf")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# G_summary_panel — 4-panel academic summary
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# G_summary_panel - 4-panel academic summary
+# ---
 xlabs_pct = [f"{int(p*100)}%" for p in TOP_P]
 
 fig, axes = plt.subplots(2, 2, figsize=(14, 9))
@@ -357,4 +357,4 @@ plt.savefig(f"{OUT_G}/G_summary_panel.pdf", bbox_inches="tight")
 plt.close()
 print("✓ G_summary_panel.pdf")
 
-print("\n✅  5 figures generated.")
+print("\n 5 figures generated.")

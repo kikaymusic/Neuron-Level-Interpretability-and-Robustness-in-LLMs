@@ -79,8 +79,8 @@ def lumia_layerwise_auc_transfer(
     """
     Evalúa la defensa con probe fijo entrenado en baseline.
     
-    activations_train: [N, L, H] — A baseline, para entrenar el probe
-    activations_eval:  [N, L, H] — A_def, para evaluar el probe
+    activations_train: [N, L, H] - A baseline, para entrenar el probe
+    activations_eval:  [N, L, H] - A_def, para evaluar el probe
     membership_labels: [N] con 0/1
 
     El probe aprende la señal de membership en la distribución original.

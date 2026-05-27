@@ -4,7 +4,7 @@ Computes task utility (weighted F1) for all 4 experiments × 10 top_p values
 on the GoEmotions sample (100 examples, 6 emotion classes).
 
 l* and TOP4_LAYERS are computed dynamically from per-layer membership probes
-trained on the base activations — no hardcoded layer indices.
+trained on the base activations - no hardcoded layer indices.
 
 Requirements:
   pip install transformers torch scikit-learn
@@ -21,7 +21,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, f1_score
 from transformers import AutoModelForSequenceClassification
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
+# Paths
 BASE        = "/Users/kikay/Documents/investigacion/Neuron-Level-Interpretability-and-Robustness-in-LLMs/data/goemotions"
 BACKUP      = "/Users/kikay/Desktop/backup_synapse"
 MODEL_HF    = "monologg/bert-base-cased-goemotions-original"
@@ -43,7 +43,7 @@ SEED         = 42
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Device: {device}")
 
-# ── Load activations ───────────────────────────────────────────────────────────
+# Load activations
 print("Loading activations...")
 raw_acts = []
 with open(ACTS_FILE) as f:
@@ -59,14 +59,14 @@ for i, rec in enumerate(raw_acts):
         A[i, lyr["index"], :] = lyr["values"]
 print(f"Activations shape: {A.shape}")   # (N, 12, 768)
 
-# ── Load labels and membership ─────────────────────────────────────────────────
+# Load labels and membership
 labels    = torch.load(LABELS_PT, weights_only=False).tolist()
 y_mem     = np.array(torch.load(MEM_PT, weights_only=False).tolist())
 sample_df = [json.loads(l) for l in open(SAMPLEDF)]
 N         = len(y_mem)
 print(f"N={N}, members={y_mem.sum()}, non-members={(1-y_mem).sum()}")
 
-# ── Phase 1: Load per-layer AUC from the MIA sweep (authoritative source) ─────
+# Phase 1: Load per-layer AUC from the MIA sweep (authoritative source)
 # The 100-sample task utility set is too small for a proper train/test split;
 # AUC computed on training data would overfit and give nonsense l*.
 # The authoritative per-layer AUC was computed during the full MIA sweep
@@ -89,7 +89,7 @@ for lid, auc in layer_aucs_sorted:
 print(f"\nl*       = L{L_STAR}  (AUC={auc_per_layer[L_STAR]:.4f})")
 print(f"TOP4     = {['L'+str(l) for l in TOP4_LAYERS]}")
 
-# ── Phase 2: Global probe for E4 neuron ranking ────────────────────────────────
+# Phase 2: Global probe for E4 neuron ranking
 print("\nTraining global membership probe for E4 neuron ranking...")
 X_flat = A.reshape(N, -1)   # (N, 9216)
 probe  = LogisticRegression(C=1.0, max_iter=1000, random_state=SEED,
@@ -104,14 +104,14 @@ layer_importance = {}
 for l in range(L):
     layer_importance[l] = np.argsort(importance[l*H:(l+1)*H])[::-1]
 
-# ── Load GoEmotions model ──────────────────────────────────────────────────────
+# Load GoEmotions model
 print("\nLoading GoEmotions model...")
 TARGET_GOEMO_IDS = [2, 11, 14, 17, 25, 26]   # anger, disgust, fear, joy, sadness, surprise
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_HF)
 model.eval()
 model.to(device)
 
-# ── Hook utilities ─────────────────────────────────────────────────────────────
+# Hook utilities
 def make_silence_hook(local_indices):
     idx_t = (torch.tensor(local_indices, dtype=torch.long)
              if local_indices else torch.tensor([], dtype=torch.long))
@@ -146,7 +146,7 @@ def remove_hooks(handles):
         h.remove()
 
 
-# ── Task evaluation ────────────────────────────────────────────────────────────
+# Task evaluation
 @torch.no_grad()
 def eval_task(sample_df, labels):
     preds, trues = [], []
@@ -162,12 +162,12 @@ def eval_task(sample_df, labels):
     return float(f1_score(trues, local_preds, average="weighted", zero_division=0))
 
 
-# ── Baseline ───────────────────────────────────────────────────────────────────
+# Baseline
 print("\nEvaluating baseline (no hooks)...")
 baseline_f1 = eval_task(sample_df, labels)
 print(f"Baseline weighted F1: {baseline_f1:.4f}")
 
-# ── Sweep ──────────────────────────────────────────────────────────────────────
+# Sweep
 print(f"\nSweep: {len(TOP_P_VALS)} top_p values × 4 experiments")
 print(f"  E2 targets: L{L_STAR}  |  E3 targets: {['L'+str(l) for l in TOP4_LAYERS]}")
 results = []
@@ -215,7 +215,7 @@ for top_p in TOP_P_VALS:
 
     results.append(row)
 
-# ── Save ───────────────────────────────────────────────────────────────────────
+# Save
 out = {
     "baseline_f1":  baseline_f1,
     "l_star":       L_STAR,

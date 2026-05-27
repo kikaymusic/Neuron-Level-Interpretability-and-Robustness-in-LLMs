@@ -124,7 +124,7 @@ if len(logger.handlers) == 0:
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-logger.info("🚀 Logging configured")
+logger.info("Logging configured")
 
 
 # ## Model configuration
@@ -182,7 +182,7 @@ model.load_state_dict(state_dict)
 model.to(device)
 model.eval()
 
-print(f"✅ Loaded {MODEL} with pretrained weights on {device}")
+print(f"Loaded {MODEL} with pretrained weights on {device}")
 
 
 # # Dataset
@@ -203,7 +203,7 @@ reduced_ready = (
 reduced_ready = False
 
 if reduced_ready:
-    logger.info(f"⚡ Reduced dataset found: {output_csv}. Skipping preprocessing.")
+    logger.info(f"Reduced dataset found: {output_csv}. Skipping preprocessing.")
     df_reduced = pd.read_csv(output_csv)
     df_reduced["input_ids"] = df_reduced["input_ids"].apply(ast.literal_eval)
     df_reduced["attention_mask"] = df_reduced["attention_mask"].apply(ast.literal_eval)
@@ -218,7 +218,7 @@ if reduced_ready:
     y_mem = df_reduced["is_member"].astype(int).to_numpy()
 
     logger.info(
-        f"✅ Loaded reduced dataset -> N={len(df_reduced)} | members={int(y_mem.sum())} | non-members={int((y_mem==0).sum())}"
+        f"Loaded reduced dataset -> N={len(df_reduced)} | members={int(y_mem.sum())} | non-members={int((y_mem==0).sum())}"
     )
 else:
     logger.info("🔄 Reduced dataset not found. Running full preprocessing...")
@@ -393,10 +393,10 @@ if not reduced_ready:
     y_task = df_reduced["label"].astype(int).to_numpy()
     y_mem = df_reduced["is_member"].astype(int).to_numpy()
 
-    logger.info(f"✅ Saved reduced dataset to: {output_csv}")
-    logger.info(f"✅ Saved numeric labels to: {labels_output_path}")
+    logger.info(f"Saved reduced dataset to: {output_csv}")
+    logger.info(f"Saved numeric labels to: {labels_output_path}")
     logger.info(
-        f"✅ Reduced -> N={len(df_reduced)} | "
+        f"Reduced -> N={len(df_reduced)} | "
         f"members={int(y_mem.sum())} | non-members={int((y_mem == 0).sum())}"
     )
 
@@ -404,7 +404,7 @@ if not reduced_ready:
 # In[10]:
 
 
-# ── Class distribution — members vs non-members ─────────────────────
+# Class distribution - members vs non-members
 label_names_map = {v: os.path.basename(k) for k, v in label_mapping.items()}
 df_plot = df_reduced.copy()
 df_plot["clase"] = df_plot["label"].map(label_names_map)
@@ -427,7 +427,7 @@ sns.despine(ax=ax)
 plt.tight_layout()
 plt.savefig(f"{figs}/G6_class_distribution.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G6_class_distribution.png")
+print(f"Guardada: {figs}/G6_class_distribution.png")
 
 
 # In[11]:
@@ -449,7 +449,7 @@ class SyscallDataset(Dataset):
 dataset = SyscallDataset(df_reduced)
 dataloader = DataLoader(dataset, batch_size=4, shuffle=False)
 
-logger.info("✅ Dataloader created")
+logger.info("Dataloader created")
 
 
 # # Explainability Module
@@ -460,7 +460,7 @@ logger.info("✅ Dataloader created")
 
 
 if os.path.exists(activations_file):
-    logger.info(f"⚡ Activations file found: {activations_file}. Skipping extraction.")
+    logger.info(f"Activations file found: {activations_file}. Skipping extraction.")
 else:
     transformers_extractor.extract_representations(
         model, 
@@ -469,11 +469,11 @@ else:
         device=device,
     )
 
-    logger.info(f"✅ Activations saved to {activations_file}")
+    logger.info(f"Activations saved to {activations_file}")
 
 
 activations, num_layers = data_loader.load_activations(activations_file)
-logger.info(f"✅ Loaded activations from {activations_file} with {num_layers} layers")
+logger.info(f"Loaded activations from {activations_file} with {num_layers} layers")
 
 # Load sentence-level classification data using activations
 tokens = data_loader.load_sentence_data(
@@ -489,7 +489,7 @@ X, y, mapping = utils.create_tensors(
 )
 
 label2idx, idx2label, src2idx, idx2src = mapping
-logger.info("✅ Created input/output tensors and label mappings for classification")
+logger.info("Created input/output tensors and label mappings for classification")
 
 
 # ## Train linear probe
@@ -529,7 +529,7 @@ scores = linear_probe.evaluate_probe(
     idx_to_class=idx2label
 )
 
-logger.info(f"🎯 Probe evaluation results (held-out): {scores}")
+logger.info(f"Probe evaluation results (held-out): {scores}")
 
 # 2) Retrain on full data only for neuron ranking
 probe = linear_probe.train_logistic_regression_probe(
@@ -562,7 +562,7 @@ print(X.shape[1])
 
 df = pd.read_csv(input_csv)
 
-# 🎯 Select 50 random examples and reset index
+# Select 50 random examples and reset index
 sample_df = df.sample(n=50, random_state=42).reset_index(drop=True)
 
 # 🧹 Convert "input_ids" and "attention_mask" from string to list format
@@ -681,7 +681,7 @@ def get_encoder_layers(model):
     elif hasattr(model, "distilbert"):
         return model.distilbert.transformer.layer
     else:
-        raise NotImplementedError("❌ Unsupported model architecture.")
+        raise NotImplementedError("Unsupported model architecture.")
 
 
 # # Membership Inference Evaluation
@@ -702,7 +702,7 @@ for i in range(N):
     flat = activations[i][0]
     A[i] = np.asarray(flat, dtype=np.float32).reshape(L, H)
 
-logger.info(f"✅ Built A with shape {A.shape} (N,L,H)")
+logger.info(f"Built A with shape {A.shape} (N,L,H)")
 
 out_dir = f"{BASE_PATH}/results"
 os.makedirs(out_dir, exist_ok=True)
@@ -721,7 +721,7 @@ df_auc, l_star = lumia_layerwise_auc_from_activations(
     out_csv=f"{out_dir}/auc_by_layer.csv"
 )
 
-logger.info(f"✅ Phase1 done. l_star={l_star}")
+logger.info(f"Phase1 done. l_star={l_star}")
 display(df_auc.head(10))
 
 
@@ -787,8 +787,7 @@ logger.info(f"Top-k membership neurons from full-data probe: {len(top_idx)}")
 # In[23]:
 
 
-# ── G4 nueva: PCA 2D de activaciones CLS en l* — members vs non-members ─────
-
+# G4 nueva: PCA 2D de activaciones CLS en l* - members vs non-members
 from sklearn.decomposition import PCA
 
 layer_star = int(l_star)
@@ -832,7 +831,7 @@ sns.despine(ax=ax)
 plt.tight_layout()
 plt.savefig(f"{figs}/G4_pca_membership_lstar.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G4_pca_membership_lstar.png")
+print(f"Guardada: {figs}/G4_pca_membership_lstar.png")
 
 
 # ## Neuron ranking
@@ -853,7 +852,7 @@ mask_obj = lumia_neuron_ranking_and_mask_from_layer(
     out_mask_json=f"{out_dir}/mask_M_layer{l_star}_top0p01.json"
 )
 
-logger.info(f"✅ Phase2 done. mask size={mask_obj['top_k']}")
+logger.info(f"Phase2 done. mask size={mask_obj['top_k']}")
 
 
 print(mask_obj)
@@ -864,7 +863,7 @@ print("---"*6)
 # In[25]:
 
 
-# ── G3: Heatmap de importancia de neuronas por capa (probe membership) ───────
+# G3: Heatmap de importancia de neuronas por capa (probe membership)
 W = probe_mem.linear.weight.detach().cpu().numpy()  # [2, 9216]
 importance = np.abs(W[1]).reshape(12, 768)          # [L, H]
 
@@ -887,7 +886,7 @@ ax.set_title("Importancia de neuronas por capa (probe membership)")
 plt.tight_layout()
 plt.savefig(f"{figs}/G3_neuron_importance_heatmap.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G3_neuron_importance_heatmap.png")
+print(f"Guardada: {figs}/G3_neuron_importance_heatmap.png")
 
 
 # ## Global (Phase 4)
@@ -911,7 +910,7 @@ handle = layers[layer_id].register_forward_hook(make_cls_silence_hook(indices_lo
 activations_file_def = f"{BASE_PATH}/activations_DEF_L{layer_id}_p{mask_obj['top_p']}.json"
 
 if os.path.exists(activations_file_def):
-    logger.info(f"⚡ Defended activations file found: {activations_file_def}. Skipping extraction.")
+    logger.info(f"Defended activations file found: {activations_file_def}. Skipping extraction.")
 else:
     transformers_extractor.extract_representations(
         model,
@@ -919,7 +918,7 @@ else:
         activations_file_def,
         device=device,
     )
-    logger.info(f"✅ Defended activations saved to {activations_file_def}")
+    logger.info(f"Defended activations saved to {activations_file_def}")
 
 handle.remove()
 
@@ -938,7 +937,7 @@ for i in range(N_def):
 # In[27]:
 
 
-# Phase 3 — Membership AUC: probe fijo en baseline, evaluado en defended
+# Phase 3 - Membership AUC: probe fijo en baseline, evaluado en defended
 df_auc_base, best_layer_base = lumia_layerwise_auc_from_activations(
     activations=A, membership_labels=y_mem, seed=123, test_size=0.2
 )
@@ -1068,7 +1067,7 @@ for lid in top_layers:
     )
     mask_objs[int(lid)] = mask_obj_k
 
-logger.info(f"✅ Phase 4A masks built for layers: {list(mask_objs.keys())}")
+logger.info(f"Phase 4A masks built for layers: {list(mask_objs.keys())}")
 
 
 # In[31]:
@@ -1129,7 +1128,7 @@ for i in range(N_g):
     flat = activations_def_g[i][0]
     A_def_g[i] = np.asarray(flat, dtype=np.float32).reshape(L_g, H_g)
 
-logger.info(f"✅ Built A_def_g with shape {A_def_g.shape}")
+logger.info(f"Built A_def_g with shape {A_def_g.shape}")
 
 
 # In[33]:
@@ -1288,7 +1287,7 @@ for i in range(N4):
     flat = activations_def_4b[i][0]
     A_def_4b[i] = np.asarray(flat, dtype=np.float32).reshape(L4, H4)
 
-logger.info(f"✅ Built A_def_4b with shape {A_def_4b.shape}")
+logger.info(f"Built A_def_4b with shape {A_def_4b.shape}")
 
 
 # In[38]:
@@ -1377,7 +1376,7 @@ logger.info(f"TASK macroF1 baseline={task_base_4b['macro_f1']:.4f} defended={tas
 # In[40]:
 
 
-# ── G1: AUC membership por capa — baseline vs todas las defensas ─────────────
+# G1: AUC membership por capa - baseline vs todas las defensas
 fig, ax = plt.subplots(figsize=(11, 4.5))
 
 layers_x = list(range(12))
@@ -1415,20 +1414,20 @@ ax.set_xticklabels([f"L{i}" for i in layers_x])
 ax.set_xlabel("Capa del Transformer")
 ax.set_ylabel("AUC membership")
 ax.set_ylim(0, 1.05)
-ax.set_title("G1 — AUC de membership por capa: baseline vs defensas")
+ax.set_title("G1 - AUC de membership por capa: baseline vs defensas")
 ax.legend(loc="upper left", fontsize=8)
 sns.despine(ax=ax)
 
 plt.tight_layout()
 plt.savefig(f"{figs}/G1_auc_por_capa.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G1_auc_por_capa.png")
+print(f"Guardada: {figs}/G1_auc_por_capa.png")
 
 
 # In[41]:
 
 
-# ── G1A: AUC por capa como líneas — baseline vs Phase 3 ──────────────────────
+# G1A: AUC por capa como líneas - baseline vs Phase 3
 fig, ax = plt.subplots(figsize=(10, 4.5))
 
 layers_x = list(range(12))
@@ -1457,19 +1456,19 @@ ax.set_xticklabels([f"L{i}" for i in layers_x])
 ax.set_ylim(0.2, 1.05)
 ax.set_xlabel("Capa del Transformer")
 ax.set_ylabel("AUC membership")
-ax.set_title("G1A — AUC membership por capa: efecto de la defensa local (Phase 3)")
+ax.set_title("G1A - AUC membership por capa: efecto de la defensa local (Phase 3)")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 plt.tight_layout()
 plt.savefig(f"{figs}/G1A_auc_phase3.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G1A_auc_phase3.png")
+print(f"Guardada: {figs}/G1A_auc_phase3.png")
 
 
 # In[42]:
 
 
-# ── G1B: AUC por capa como líneas — baseline vs Phase 4A vs Phase 4B ─────────
+# G1B: AUC por capa como líneas - baseline vs Phase 4A vs Phase 4B
 fig, ax = plt.subplots(figsize=(10, 4.5))
 
 series = [
@@ -1491,13 +1490,13 @@ ax.set_xticklabels([f"L{i}" for i in layers_x])
 ax.set_ylim(0.2, 1.05)
 ax.set_xlabel("Capa del Transformer")
 ax.set_ylabel("AUC membership")
-ax.set_title("G1B — AUC membership por capa: defensas globales (Phase 4A vs 4B)")
+ax.set_title("G1B - AUC membership por capa: defensas globales (Phase 4A vs 4B)")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 plt.tight_layout()
 plt.savefig(f"{figs}/G1B_auc_phase4.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G1B_auc_phase4.png")
+print(f"Guardada: {figs}/G1B_auc_phase4.png")
 
 
 # In[ ]:
@@ -1509,8 +1508,7 @@ print(f"✅ Guardada: {figs}/G1B_auc_phase4.png")
 # In[43]:
 
 
-# ── G1C: Heatmap resumen AUC membership por capa y condición ──
-
+# G1C: Heatmap resumen AUC membership por capa y condición
 layers_x = list(range(12))
 
 def auc_series(df):
@@ -1555,13 +1553,13 @@ ax.add_patch(plt.Rectangle((int(l_star), 0), 1, len(heatmap_df.index),
 plt.tight_layout()
 plt.savefig(f"{figs}/G1C_auc_heatmap_summary.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G1C_auc_heatmap_summary.png")
+print(f"Guardada: {figs}/G1C_auc_heatmap_summary.png")
 
 
 # In[44]:
 
 
-# ── G5: Sweet spot — trade-off privacidad/utilidad (placeholder con top_p=0.01)
+# -- G5: Sweet spot - trade-off privacidad/utilidad (placeholder con top_p=0.01)
 # Cuando hagas el sweep, añade más puntos a estas listas
 top_p_vals  = [0.01]
 
@@ -1602,19 +1600,18 @@ ax.set_title("Utilidad vs top_p")
 ax.legend(fontsize=8)
 sns.despine(ax=ax)
 
-fig.suptitle("G5 — Sweet spot: trade-off privacidad / utilidad", fontsize=12)
+fig.suptitle("G5 - Sweet spot: trade-off privacidad / utilidad", fontsize=12)
 plt.tight_layout()
 plt.savefig(f"{figs}/G5_sweet_spot_tradeoff.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G5_sweet_spot_tradeoff.png")
+print(f"Guardada: {figs}/G5_sweet_spot_tradeoff.png")
 print("⚠️  Añade más puntos a top_p_vals cuando hagas el sweep completo")
 
 
 # In[45]:
 
 
-# ── G_perf: Rendimiento general de tarea por condición ───────────────────────
-
+# G_perf: Rendimiento general de tarea por condición
 perf_df = pd.DataFrame([
     {
         "Condición": "Baseline",
@@ -1657,15 +1654,14 @@ sns.despine(ax=ax)
 plt.tight_layout()
 plt.savefig(f"{figs}/G_perf_task_metrics.png", dpi=150)
 plt.show()
-print(f"✅ Guardada: {figs}/G_perf_task_metrics.png")
+print(f"Guardada: {figs}/G_perf_task_metrics.png")
 display(perf_df)
 
 
 # In[46]:
 
 
-# ── G2: Matrices de confusión — baseline, Phase 3, 4A, 4B ────────────────────
-
+# G2: Matrices de confusión - baseline, Phase 3, 4A, 4B
 def get_preds(model, df, device, layer_id=None, indices_local=None):
     model.eval()
     handle = None
@@ -1717,17 +1713,17 @@ for ax, (yt, yp, title) in zip(axes.flatten(), scenarios):
     ax.set_title(title, fontsize=10)
     ax.tick_params(axis="x", rotation=30)
 
-fig.suptitle("G2 — Matrices de confusión: evolución a través de las defensas", fontsize=12)
+fig.suptitle("G2 - Matrices de confusión: evolución a través de las defensas", fontsize=12)
 plt.tight_layout()
 plt.savefig(f"{figs}/G2_confusion_matrix.png", dpi=150, bbox_inches="tight")
 plt.show()
-print(f"✅ Guardada: {figs}/G2_confusion_matrix.png")
+print(f"Guardada: {figs}/G2_confusion_matrix.png")
 
 
 # In[47]:
 
 
-# ── G_REND: Rendimiento general — precision/recall/F1 por clase ───────────────
+# G_REND: Rendimiento general - precision/recall/F1 por clase
 from sklearn.metrics import classification_report
 import pandas as pd
 
@@ -1770,17 +1766,17 @@ for ax, report, title in [
     ax.legend(fontsize=8, loc="lower right")
     sns.despine(ax=ax)
 
-fig.suptitle("G_REND — Precision / Recall / F1 por clase: baseline vs Phase 3", fontsize=11)
+fig.suptitle("G_REND - Precision / Recall / F1 por clase: baseline vs Phase 3", fontsize=11)
 plt.tight_layout()
 plt.savefig(f"{figs}/G_REND_performance_by_class.png", dpi=150, bbox_inches="tight")
 plt.show()
-print(f"✅ Guardada: {figs}/G_REND_performance_by_class.png")
+print(f"Guardada: {figs}/G_REND_performance_by_class.png")
 
 
 # In[48]:
 
 
-# ── G4: F1 por clase — todas las fases ───────────────────────────────────────
+# G4: F1 por clase - todas las fases
 from sklearn.metrics import classification_report
 
 reports = {
@@ -1814,7 +1810,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(CLASS_NAMES, rotation=20, ha="right")
 ax.set_ylim(0, 1.15)
 ax.set_ylabel("F1-score")
-ax.set_title("G4 — F1 por clase: baseline vs todas las defensas")
+ax.set_title("G4 - F1 por clase: baseline vs todas las defensas")
 ax.axhline(1.0, color="gray", linestyle=":", linewidth=0.8, alpha=0.4)
 ax.legend(fontsize=9, loc="lower right")
 sns.despine(ax=ax)
@@ -1830,7 +1826,7 @@ for i, (phase, report) in enumerate(reports.items()):
 plt.tight_layout()
 plt.savefig(f"{figs}/G4_f1_por_clase.png", dpi=150, bbox_inches="tight")
 plt.show()
-print(f"✅ Guardada: {figs}/G4_f1_por_clase.png")
+print(f"Guardada: {figs}/G4_f1_por_clase.png")
 
 
 # # Sweep experiments
@@ -1845,10 +1841,10 @@ print(f"✅ Guardada: {figs}/G4_f1_por_clase.png")
 # Objetivo: medir el trade-off privacidad/utilidad barriendo top_p.
 #
 # Experimentos por cada valor de top_p:
-#   E1 — Phase 3   : dirigido, solo l*          → defensa mínima
-#   E2 — Phase 4A  : dirigido, top-K capas      → defensa media
-#   E3 — Phase 4B  : dirigido, espacio global   → defensa máxima
-#   E4 — Control   : aleatorio, mismo k que 4B  → baseline de comparación
+#   E1 - Phase 3   : dirigido, solo l*          → defensa mínima
+#   E2 - Phase 4A  : dirigido, top-K capas      → defensa media
+#   E3 - Phase 4B  : dirigido, espacio global   → defensa máxima
+#   E4 - Control   : aleatorio, mismo k que 4B  → baseline de comparación
 #
 # Métricas recogidas por experimento:
 #   - MEM AUC best layer (transferability probe)
@@ -1858,7 +1854,7 @@ print(f"✅ Guardada: {figs}/G4_f1_por_clase.png")
 #
 # Guardado:
 #   - Checkpoint JSON + CSV tras cada top_p (no se pierde nada si se cae)
-#   - Carpeta con timestamp — nunca sobreescribe runs anteriores
+#   - Carpeta con timestamp - nunca sobreescribe runs anteriores
 #   - Activaciones defendidas en JSON por si hacen falta para análisis posterior
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1868,7 +1864,7 @@ import pandas as pd
 from datetime import datetime
 from collections import defaultdict
 
-# ── Configuración ─────────────────────────────────────────────────────────────
+# Configuración
 TOP_P_VALUES = [0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.20, 0.40, 0.65, 0.80]
 K_LAYERS     = 4       # número de capas para Phase 4A
 SEED         = 42
@@ -1877,20 +1873,20 @@ RUN_TS       = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 sweep_dir = f"{BASE_PATH}/sweep_{RUN_TS}"
 os.makedirs(sweep_dir, exist_ok=True)
-logger.info(f"Sweep started — run: {RUN_TS}")
+logger.info(f"Sweep started - run: {RUN_TS}")
 logger.info(f"top_p values: {TOP_P_VALUES}")
 logger.info(f"Output dir: {sweep_dir}")
 
-# ── Dimensiones del modelo ────────────────────────────────────────────────────
+# Dimensiones del modelo
 L = int(num_layers)
 H = int(model.config.hidden_size)
 
-# ── Importancia global de neuronas para membership (desde probe_mem) ──────────
+# Importancia global de neuronas para membership (desde probe_mem)
 # probe_mem fue entrenado sobre X_mem = A.reshape(N, L*H) → predice y_mem
 # Se suma el |peso| de ambas clases para obtener importancia global por neurona
 importance_flat = probe_mem.linear.weight.detach().abs().sum(dim=0).cpu().numpy()  # [L*H]
 
-# ── Baseline (calculado una sola vez con el SEED del sweep) ───────────────────
+# Baseline (calculado una sola vez con el SEED del sweep)
 logger.info("Computing baseline...")
 df_auc_baseline, _ = lumia_layerwise_auc_from_activations(
     activations=A, membership_labels=y_mem, seed=SEED, test_size=TEST_SIZE,
@@ -1898,9 +1894,9 @@ df_auc_baseline, _ = lumia_layerwise_auc_from_activations(
 task_baseline     = eval_task(model, df_reduced, device)
 baseline_best_auc = float(df_auc_baseline["auc"].max())
 baseline_f1       = float(task_baseline["macro_f1"])
-logger.info(f"Baseline — best_auc={baseline_best_auc:.4f} | macro_f1={baseline_f1:.4f} | l*={int(l_star)}")
+logger.info(f"Baseline - best_auc={baseline_best_auc:.4f} | macro_f1={baseline_f1:.4f} | l*={int(l_star)}")
 
-# Top-K capas para Phase 4A — fijas durante todo el sweep, basadas en AUC baseline
+# Top-K capas para Phase 4A - fijas durante todo el sweep, basadas en AUC baseline
 top_K_layers = (
     df_auc_baseline
     .sort_values("auc", ascending=False)
@@ -1910,8 +1906,7 @@ top_K_layers = (
 )
 logger.info(f"Top-{K_LAYERS} layers for Phase 4A: {top_K_layers}")
 
-# ── Funciones auxiliares ──────────────────────────────────────────────────────
-
+# Funciones auxiliares
 def global_to_hooks(indices_global, H):
     """
     Convierte una lista de índices globales del espacio [L*H]
@@ -2002,7 +1997,7 @@ def evaluate_scenario(label, A_baseline, A_def, y_mem, model, df_reduced,
     return metrics
 
 
-# ── Loop principal ────────────────────────────────────────────────────────────
+# Loop principal
 results = []
 
 for top_p in TOP_P_VALUES:
@@ -2020,10 +2015,10 @@ for top_p in TOP_P_VALUES:
         "k_global":    k_global,
     }
 
-    # ── E1: Phase 3 — dirigido, solo l* ──────────────────────────────────────
+    # E1: Phase 3 - dirigido, solo l*
     # Silencia las top_p% neuronas más relevantes para membership en l* únicamente.
     # Mide si la defensa mínima (una sola capa) es suficiente para reducir el AUC.
-    logger.info(f"\n[E1 — Phase 3] Silencing top {k_per_layer} membership neurons in l*={int(l_star)}")
+    logger.info(f"\n[E1 - Phase 3] Silencing top {k_per_layer} membership neurons in l*={int(l_star)}")
     mask_p3  = lumia_neuron_ranking_and_mask_from_layer(
         activations=A, membership_labels=y_mem,
         layer_id=int(l_star), top_p=top_p,
@@ -2041,11 +2036,11 @@ for top_p in TOP_P_VALUES:
     row.update({f"e1_p3_{k}": v for k, v in res_p3.items() if k != "auc_per_layer"})
     row["e1_p3_auc_per_layer"] = json.dumps(res_p3["auc_per_layer"])
 
-    # ── E2: Phase 4A — dirigido, top-K capas ─────────────────────────────────
+    # E2: Phase 4A - dirigido, top-K capas
     # Silencia las top_p% neuronas más relevantes para membership en las K capas
     # con mayor AUC baseline. Evalúa si cubrir más capas reduce la redistribución
     # de señal observada en Phase 3.
-    logger.info(f"\n[E2 — Phase 4A] Silencing top {k_per_layer} neurons in layers {top_K_layers}")
+    logger.info(f"\n[E2 - Phase 4A] Silencing top {k_per_layer} neurons in layers {top_K_layers}")
     hooks_4a = {}
     for lid in top_K_layers:
         mo = lumia_neuron_ranking_and_mask_from_layer(
@@ -2064,11 +2059,11 @@ for top_p in TOP_P_VALUES:
     row.update({f"e2_p4a_{k}": v for k, v in res_4a.items() if k != "auc_per_layer"})
     row["e2_p4a_auc_per_layer"] = json.dumps(res_4a["auc_per_layer"])
 
-    # ── E3: Phase 4B — dirigido, espacio global ───────────────────────────────
+    # E3: Phase 4B - dirigido, espacio global
     # Selecciona las top_p% neuronas con mayor importancia global de membership
     # sobre el espacio aplanado (L*H) y las silencia en sus capas correspondientes.
     # La defensa más amplia: puede tocar todas las capas simultáneamente.
-    logger.info(f"\n[E3 — Phase 4B] Silencing top {k_global} neurons globally")
+    logger.info(f"\n[E3 - Phase 4B] Silencing top {k_global} neurons globally")
     top_idx_4b = np.argsort(importance_flat)[-k_global:].tolist()
     hooks_4b   = global_to_hooks(top_idx_4b, H)
     logger.info(f"  Layers implicated: {sorted(hooks_4b.keys())}")
@@ -2082,13 +2077,13 @@ for top_p in TOP_P_VALUES:
     row.update({f"e3_p4b_{k}": v for k, v in res_4b.items() if k != "auc_per_layer"})
     row["e3_p4b_auc_per_layer"] = json.dumps(res_4b["auc_per_layer"])
 
-    # ── E4: Control aleatorio — mismo k que Phase 4B ─────────────────────────
+    # E4: Control aleatorio - mismo k que Phase 4B
     # Silencia k_global neuronas elegidas al azar (sin usar el ranking de membership).
     # Permite validar si el ranking aporta valor real:
     #   - Si E1-E3 bajan más el AUC que E4 → el ranking funciona.
     #   - Si E4 baja igual → cualquier perturbación sirve, el ranking no es necesario.
     # Seed distinto por top_p para garantizar aleatoriedad independiente en cada punto.
-    logger.info(f"\n[E4 — Random control] Silencing {k_global} random neurons")
+    logger.info(f"\n[E4 - Random control] Silencing {k_global} random neurons")
     rng       = np.random.default_rng(SEED + int(top_p * 10000))
     rand_idx  = rng.choice(L * H, size=k_global, replace=False).tolist()
     hooks_rnd = global_to_hooks(rand_idx, H)
@@ -2104,7 +2099,7 @@ for top_p in TOP_P_VALUES:
 
     results.append(row)
 
-    # ── Checkpoint tras cada top_p ────────────────────────────────────────────
+    # Checkpoint tras cada top_p
     df_results = pd.DataFrame(results)
     df_results.to_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv", index=False)
     with open(f"{sweep_dir}/sweep_results_{RUN_TS}.json", "w") as f:
@@ -2119,10 +2114,10 @@ for top_p in TOP_P_VALUES:
                     "macro_f1": baseline_f1,
                 },
                 "experiments": {
-                    "E1": "Phase 3 — top membership neurons in l* only",
-                    "E2": f"Phase 4A — top membership neurons in top-{K_LAYERS} layers by AUC",
-                    "E3": "Phase 4B — top membership neurons globally (all layers)",
-                    "E4": "Random control — same k as E3 but random neuron selection",
+                    "E1": "Phase 3 - top membership neurons in l* only",
+                    "E2": f"Phase 4A - top membership neurons in top-{K_LAYERS} layers by AUC",
+                    "E3": "Phase 4B - top membership neurons globally (all layers)",
+                    "E4": "Random control - same k as E3 but random neuron selection",
                 },
                 "results": results,
             },
@@ -2130,12 +2125,12 @@ for top_p in TOP_P_VALUES:
             indent=2,
         )
     logger.info(
-        f"\n✅ Checkpoint saved — top_p={top_p} done "
+        f"\nCheckpoint saved - top_p={top_p} done "
         f"({TOP_P_VALUES.index(top_p) + 1}/{len(TOP_P_VALUES)})"
     )
 
 logger.info(f"\n{'='*65}")
-logger.info(f"SWEEP COMPLETE — {len(results)} top_p values processed")
+logger.info(f"SWEEP COMPLETE - {len(results)} top_p values processed")
 logger.info(f"Results: {sweep_dir}/sweep_results_{RUN_TS}.csv")
 logger.info(f"{'='*65}")
 
@@ -2143,8 +2138,7 @@ logger.info(f"{'='*65}")
 # In[50]:
 
 
-# ── Visualización del sweep (G5 sweet spot) ──────────────────────────────────
-
+# Visualización del sweep (G5 sweet spot)
 df_sw = pd.read_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv")
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
@@ -2165,9 +2159,9 @@ ax.axhline(baseline_best_auc, color=PALETTE["baseline"], linestyle="--",
            linewidth=1.5, label=f"Baseline ({baseline_best_auc:.3f})")
 ax.axhline(0.5, color="gray", linestyle=":", linewidth=1, alpha=0.5, label="Azar (0.5)")
 ax.set_xscale("log")
-ax.set_xlabel("top_p — fraction of neurons silenced (log scale)")
+ax.set_xlabel("top_p - fraction of neurons silenced (log scale)")
 ax.set_ylabel("MEM AUC (best layer, transferability probe)")
-ax.set_title("Privacy — membership signal reduction")
+ax.set_title("Privacy - membership signal reduction")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 
@@ -2179,28 +2173,27 @@ for prefix, label, color, style in experiments:
 ax.axhline(baseline_f1, color=PALETTE["baseline"], linestyle="--",
            linewidth=1.5, label=f"Baseline ({baseline_f1:.3f})")
 ax.set_xscale("log")
-ax.set_xlabel("top_p — fraction of neurons silenced (log scale)")
+ax.set_xlabel("top_p - fraction of neurons silenced (log scale)")
 ax.set_ylabel("TASK macro-F1")
-ax.set_title("Utility — classification performance")
+ax.set_title("Utility - classification performance")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 
 fig.suptitle(
-    f"G5 — Privacy / Utility trade-off sweep  ·  N={len(df_reduced)}  ·  {RUN_TS}",
+    f"G5 - Privacy / Utility trade-off sweep  ·  N={len(df_reduced)}  ·  {RUN_TS}",
     fontsize=11
 )
 plt.tight_layout()
 fig_path = f"{figs}/G5_sweep_{RUN_TS}.png"
 plt.savefig(fig_path, dpi=150, bbox_inches="tight")
 plt.show()
-logger.info(f"✅ G5 saved: {fig_path}")
+logger.info(f"G5 saved: {fig_path}")
 
 
 # In[52]:
 
 
-# ── G5: Sweet spot — privacy / utility trade-off sweep ───────────────────────
-
+# G5: Sweet spot - privacy / utility trade-off sweep
 df_sw = pd.read_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv")
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
@@ -2221,9 +2214,9 @@ ax.axhline(baseline_best_auc, color=PALETTE["baseline"], linestyle="--",
            linewidth=1.5, label=f"Baseline ({baseline_best_auc:.3f})")
 ax.axhline(0.5, color="gray", linestyle=":", linewidth=1, alpha=0.5, label="Random (0.5)")
 ax.set_xscale("log")
-ax.set_xlabel("top_p — fraction of neurons silenced (log scale)")
+ax.set_xlabel("top_p - fraction of neurons silenced (log scale)")
 ax.set_ylabel("MEM AUC (best layer, transferability probe)")
-ax.set_title("Privacy — membership signal reduction")
+ax.set_title("Privacy - membership signal reduction")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 
@@ -2235,14 +2228,14 @@ for prefix, label, color, style in experiments:
 ax.axhline(baseline_f1, color=PALETTE["baseline"], linestyle="--",
            linewidth=1.5, label=f"Baseline ({baseline_f1:.3f})")
 ax.set_xscale("log")
-ax.set_xlabel("top_p — fraction of neurons silenced (log scale)")
+ax.set_xlabel("top_p - fraction of neurons silenced (log scale)")
 ax.set_ylabel("TASK macro-F1")
-ax.set_title("Utility — classification performance")
+ax.set_title("Utility - classification performance")
 ax.legend(fontsize=9)
 sns.despine(ax=ax)
 
 fig.suptitle(
-    f"G5 — Privacy / Utility trade-off sweep  ·  N={len(df_reduced)}  ·  {RUN_TS}",
+    f"G5 - Privacy / Utility trade-off sweep  ·  N={len(df_reduced)}  ·  {RUN_TS}",
     fontsize=11
 )
 plt.tight_layout()
@@ -2250,20 +2243,19 @@ fig_path = f"{figs}/G5_sweep_{RUN_TS}.png"
 os.makedirs(figs, exist_ok=True)
 plt.savefig(fig_path, dpi=150, bbox_inches="tight")
 plt.show()
-logger.info(f"✅ G5 saved: {fig_path}")
+logger.info(f"G5 saved: {fig_path}")
 
 
 # In[55]:
 
 
-# ── G5: Sweet spot — una gráfica por fase ────────────────────────────────────
-
+# G5: Sweet spot - una gráfica por fase
 df_sw = pd.read_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv")
 
 phases = [
-    ("e1_p3",  "Phase 3 — local defence (l* only)"),
-    ("e2_p4a", f"Phase 4A — multi-layer (top-{K_LAYERS} layers)"),
-    ("e3_p4b", "Phase 4B — global flattened"),
+    ("e1_p3",  "Phase 3 - local defence (l* only)"),
+    ("e2_p4a", f"Phase 4A - multi-layer (top-{K_LAYERS} layers)"),
+    ("e3_p4b", "Phase 4B - global flattened"),
     ("e4_rnd", "Random control"),
 ]
 
@@ -2275,7 +2267,7 @@ for prefix, title in phases:
     task_vals = df_sw[f"{prefix}_macro_f1"].values
     x         = df_sw["top_p"].values
 
-    # MEM AUC — eje izquierdo
+    # MEM AUC - eje izquierdo
     l1, = ax1.plot(x, mem_vals,  "o-", color="#E24B4A", linewidth=2.2,
                    markersize=7, label="MEM AUC (privacy)")
     ax1.axhline(baseline_best_auc, color="#E24B4A", linestyle="--",
@@ -2286,7 +2278,7 @@ for prefix, title in phases:
     ax1.tick_params(axis="y", labelcolor="#E24B4A")
     ax1.set_ylim(0.3, 1.05)
 
-    # TASK F1 — eje derecho
+    # TASK F1 - eje derecho
     l2, = ax2.plot(x, task_vals, "s-", color="#1D9E75", linewidth=2.2,
                    markersize=7, label="TASK macro-F1 (utility)")
     ax2.axhline(baseline_f1, color="#1D9E75", linestyle="--",
@@ -2304,14 +2296,14 @@ for prefix, title in phases:
                     alpha=0.10, color="#5C85C5", label="Sweet spot zone")
 
     ax1.set_xscale("log")
-    ax1.set_xlabel("top_p — fraction of neurons silenced (log scale)")
+    ax1.set_xlabel("top_p - fraction of neurons silenced (log scale)")
 
     # Leyenda combinada
     lines = [l1, l2]
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, fontsize=9, loc="upper left")
 
-    ax1.set_title(f"Sweet spot — {title}", fontsize=11)
+    ax1.set_title(f"Sweet spot - {title}", fontsize=11)
     sns.despine(ax=ax1, right=False)
 
     plt.tight_layout()
@@ -2319,20 +2311,19 @@ for prefix, title in phases:
     os.makedirs(figs, exist_ok=True)
     plt.savefig(fig_path, dpi=150, bbox_inches="tight")
     plt.show()
-    logger.info(f"✅ Saved: {fig_path}")
+    logger.info(f"Saved: {fig_path}")
 
 
 # In[56]:
 
 
-# ── G5: Sweet spot — una gráfica por fase ────────────────────────────────────
-
+# G5: Sweet spot - una gráfica por fase
 df_sw = pd.read_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv")
 
 phases = [
-    ("e1_p3",  "Phase 3 — local defence (l* only)"),
-    ("e2_p4a", f"Phase 4A — multi-layer (top-{K_LAYERS} layers)"),
-    ("e3_p4b", "Phase 4B — global flattened"),
+    ("e1_p3",  "Phase 3 - local defence (l* only)"),
+    ("e2_p4a", f"Phase 4A - multi-layer (top-{K_LAYERS} layers)"),
+    ("e3_p4b", "Phase 4B - global flattened"),
     ("e4_rnd", "Random control"),
 ]
 
@@ -2344,7 +2335,7 @@ for prefix, title in phases:
     task_vals = df_sw[f"{prefix}_macro_f1"].values
     x_pct     = df_sw["top_p"].values * 100   # convertir a porcentaje real
 
-    # MEM AUC — eje izquierdo
+    # MEM AUC - eje izquierdo
     l1, = ax1.plot(x_pct, mem_vals, "o-", color="#E24B4A", linewidth=2.2,
                    markersize=7, label="MEM AUC (privacy)")
     ax1.axhline(baseline_best_auc, color="#E24B4A", linestyle="--",
@@ -2355,7 +2346,7 @@ for prefix, title in phases:
     ax1.tick_params(axis="y", labelcolor="#E24B4A")
     ax1.set_ylim(0.3, 1.05)
 
-    # TASK F1 — eje derecho
+    # TASK F1 - eje derecho
     l2, = ax2.plot(x_pct, task_vals, "s-", color="#1D9E75", linewidth=2.2,
                    markersize=7, label="TASK macro-F1 (utility)")
     ax2.axhline(baseline_f1, color="#1D9E75", linestyle="--",
@@ -2380,7 +2371,7 @@ for prefix, title in phases:
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, fontsize=9, loc="upper left")
 
-    ax1.set_title(f"Sweet spot — {title}", fontsize=11)
+    ax1.set_title(f"Sweet spot - {title}", fontsize=11)
     sns.despine(ax=ax1, right=False)
 
     plt.tight_layout()
@@ -2388,7 +2379,7 @@ for prefix, title in phases:
     os.makedirs(figs, exist_ok=True)
     plt.savefig(fig_path, dpi=150, bbox_inches="tight")
     plt.show()
-    logger.info(f"✅ Saved: {fig_path}")
+    logger.info(f"Saved: {fig_path}")
 
 
 # # Graphics
@@ -2408,7 +2399,7 @@ import matplotlib.ticker as mticker
 import seaborn as sns
 import os
 
-# ── Cargar datos ──────────────────────────────────────────────────────────────
+# Cargar datos
 df_sw = pd.read_csv(f"{sweep_dir}/sweep_results_{RUN_TS}.csv")
 
 
@@ -2416,19 +2407,19 @@ x_pct    = np.arange(len(df_sw))
 x_labels = [f"{v*100:.1f}%" for v in df_sw["top_p"].values]
 
 PHASES = [
-    ("e1_p3",  "Phase 3 — local (l* only)",         PALETTE["phase3"],   "o-"),
-    ("e2_p4a", f"Phase 4A — top-{K_LAYERS} layers", PALETTE["phase4a"],  "s-"),
-    ("e3_p4b", "Phase 4B — global",                 PALETTE["phase4b"],  "^-"),
+    ("e1_p3",  "Phase 3 - local (l* only)",         PALETTE["phase3"],   "o-"),
+    ("e2_p4a", f"Phase 4A - top-{K_LAYERS} layers", PALETTE["phase4a"],  "s-"),
+    ("e3_p4b", "Phase 4B - global",                 PALETTE["phase4b"],  "^-"),
     ("e4_rnd", "Random control",                    "#888888",           "x--"),
 ]
 
 os.makedirs(figs, exist_ok=True)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# G5: Sweet spot — una gráfica por fase (MEM AUC + TASK F1 en doble eje Y)
+# ---
+# G5: Sweet spot - una gráfica por fase (MEM AUC + TASK F1 en doble eje Y)
 # Muestra el equilibrio entre privacidad y utilidad a lo largo del sweep
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 for prefix, title, color, _ in PHASES:
     fig, ax1 = plt.subplots(figsize=(9, 5))
     ax2 = ax1.twinx()
@@ -2470,20 +2461,20 @@ for prefix, title, color, _ in PHASES:
     lines  = [l1, l2]
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, fontsize=9, loc="upper left")
-    ax1.set_title(f"Sweet spot — {title}", fontsize=12)
+    ax1.set_title(f"Sweet spot - {title}", fontsize=12)
     sns.despine(ax=ax1, right=False)
     plt.tight_layout()
     path = f"{figs}/G5_{prefix}_sweetspot_{RUN_TS}.png"
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.show()
-    logger.info(f"✅ {path}")
+    logger.info(f"{path}")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 # G_AUC_HEATMAP: Redistribución de señal de membership por capa
 # Para cada fase, heatmap (capa × top_p) mostrando cómo el AUC se mueve
 # entre capas a medida que silencias más neuronas
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 for prefix, title, color, _ in PHASES:
     n_layers = 12
     heatmap_data = np.zeros((n_layers, len(df_sw)))
@@ -2517,7 +2508,7 @@ for prefix, title, color, _ in PHASES:
     ax.set_xlabel("Neurons silenced (%)", fontsize=11)
     ax.set_ylabel("Transformer layer", fontsize=11)
     ax.set_title(
-        f"Signal redistribution across layers — {title}\n"
+        f"Signal redistribution across layers - {title}\n"
         f"(red dashed = l*={int(l_star)}, the originally most vulnerable layer)",
         fontsize=11
     )
@@ -2525,14 +2516,14 @@ for prefix, title, color, _ in PHASES:
     path = f"{figs}/G_heatmap_{prefix}_{RUN_TS}.png"
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.show()
-    logger.info(f"✅ {path}")
+    logger.info(f"{path}")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# G_DELTA: Trade-off resumido — reducción de AUC vs coste en utilidad
+# ---
+# G_DELTA: Trade-off resumido - reducción de AUC vs coste en utilidad
 # Para cada top_p, barras agrupadas mostrando delta_mem (privacidad ganada)
 # y delta_f1 (utilidad perdida). Ideal: delta_mem alto, delta_f1 cercano a 0
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 for prefix, title, color, _ in PHASES:
     delta_mem = baseline_best_auc - df_sw[f"{prefix}_best_auc_def"].values
     delta_f1  = baseline_f1       - df_sw[f"{prefix}_macro_f1"].values
@@ -2552,7 +2543,7 @@ for prefix, title, color, _ in PHASES:
     ax.set_xlabel("Neurons silenced (%)", fontsize=11)
     ax.set_ylabel("Delta vs baseline", fontsize=11)
     ax.set_title(
-        f"Privacy gain vs utility cost — {title}\n"
+        f"Privacy gain vs utility cost - {title}\n"
         f"(positive = improvement for privacy / degradation for utility)",
         fontsize=11
     )
@@ -2562,14 +2553,14 @@ for prefix, title, color, _ in PHASES:
     path = f"{figs}/G_delta_{prefix}_{RUN_TS}.png"
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.show()
-    logger.info(f"✅ {path}")
+    logger.info(f"{path}")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 # G_COMPARE: Las 4 fases en un scatter MEM AUC vs TASK F1
 # Cada punto = un top_p. Punto ideal: esquina inferior derecha (MEM bajo, F1 alto)
 # Permite comparar qué estrategia de defensa domina a las demás
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 fig, ax = plt.subplots(figsize=(7, 6))
 
 for prefix, label, color, style in PHASES:
@@ -2600,7 +2591,7 @@ ax.fill_betweenx([0.0, 0.5], 0.95 * baseline_f1, 1.05,
 ax.set_xlabel("TASK macro-F1 (utility →)", fontsize=11)
 ax.set_ylabel("MEM AUC best layer (privacy ↓)", fontsize=11)
 ax.set_title(
-    "Privacy / Utility — all defences compared\n"
+    "Privacy / Utility - all defences compared\n"
     "(bottom-right = best trade-off)",
     fontsize=11
 )
@@ -2611,9 +2602,9 @@ plt.tight_layout()
 path = f"{figs}/G_compare_all_{RUN_TS}.png"
 plt.savefig(path, dpi=150, bbox_inches="tight")
 plt.show()
-logger.info(f"✅ {path}")
+logger.info(f"{path}")
 
-logger.info(f"\n✅ All figures saved to {figs}/")
+logger.info(f"\nAll figures saved to {figs}/")
 
 
 # In[ ]:

@@ -4,9 +4,9 @@ Extracts [CLS] LayerNorm activations for all 2770 GoEmotions examples in
 full_sample_all.json and saves in the same NDJSON format as activations.json.
 
 Output:
-  activations_full.json   — NDJSON, same format as existing activations.json
-  membership_full.pt      — torch tensor of is_member flags (2770,)
-  sample_df_full.json     — NDJSON with input_ids and attention_mask per example
+  activations_full.json   - NDJSON, same format as existing activations.json
+  membership_full.pt      - torch tensor of is_member flags (2770,)
+  sample_df_full.json     - NDJSON with input_ids and attention_mask per example
 """
 
 import json, torch
@@ -21,19 +21,19 @@ L       = 12
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Device: {device}")
 
-# ── Load data ──────────────────────────────────────────────────────────────────
+# Load data
 with open(f"{BASE}/full_sample_all.json") as f:
     rows = [json.loads(l) for l in f if l.strip()]
 print(f"Examples: {len(rows)}  Members: {sum(r['is_member'] for r in rows)}  "
       f"Non-members: {sum(1-r['is_member'] for r in rows)}")
 
-# ── Load model and tokenizer ───────────────────────────────────────────────────
+# Load model and tokenizer
 print("Loading model and tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 model     = AutoModelForSequenceClassification.from_pretrained(MODEL)
 model.eval().to(device)
 
-# ── Hook: capture [CLS] from each LayerNorm output ─────────────────────────────
+# Hook: capture [CLS] from each LayerNorm output
 layer_acts = {}
 
 def make_hook(layer_idx):
@@ -47,7 +47,7 @@ for i in range(L):
     h = model.bert.encoder.layer[i].output.LayerNorm.register_forward_hook(make_hook(i))
     handles.append(h)
 
-# ── Extract activations ────────────────────────────────────────────────────────
+# Extract activations
 print("Extracting activations...")
 act_lines  = []
 sdf_lines  = []
@@ -89,7 +89,7 @@ with torch.no_grad():
 for h in handles:
     h.remove()
 
-# ── Save ───────────────────────────────────────────────────────────────────────
+# Save
 out_acts = f"{BASE}/activations_full.json"
 with open(out_acts, "w") as f:
     f.write("\n".join(act_lines) + "\n")

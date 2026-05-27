@@ -11,8 +11,8 @@ Why l*=L9:
   a coherent single-layer strategy.
 
 Output:
-  rerun_goemo_full_<timestamp>.json  — per-experiment results for all p
-  rerun_goemo_full_<timestamp>.csv   — same, CSV format
+  rerun_goemo_full_<timestamp>.json  - per-experiment results for all p
+  rerun_goemo_full_<timestamp>.csv   - same, CSV format
 """
 
 import csv, json, os
@@ -39,7 +39,7 @@ L, H         = 12, 768
 TOTAL        = L * H
 SEED         = 42
 
-# ── 1. Load activations ────────────────────────────────────────────────────────
+# 1. Load activations
 print("Loading activations...")
 raw = []
 with open(ACTS_FILE) as f:
@@ -56,18 +56,18 @@ for i, rec in enumerate(raw):
 N = len(raw)
 print(f"Activations: {A.shape}")
 
-# ── 2. Load membership labels ──────────────────────────────────────────────────
+# 2. Load membership labels
 y_mem = np.array(torch.load(MEM_FILE, weights_only=False).tolist())
 print(f"Members: {y_mem.sum()}  Non-members: {(1-y_mem).sum()}")
 
-# ── 3. Train/test split ────────────────────────────────────────────────────────
+# 3. Train/test split
 tr_idx, te_idx = train_test_split(
     np.arange(N), test_size=0.2, random_state=SEED, stratify=y_mem
 )
 print(f"Train: {len(tr_idx)} (members={y_mem[tr_idx].sum()})  "
       f"Test: {len(te_idx)} (members={y_mem[te_idx].sum()})")
 
-# ── 4. Compute baseline per-layer AUC from training data ──────────────────────
+# 4. Compute baseline per-layer AUC from training data
 print("\nComputing per-layer baseline AUC on test set...")
 base_auc_per_layer = {}
 for lid in range(L):
@@ -90,7 +90,7 @@ print(f"TOP4 (from data) = {['L'+str(l) for l in TOP4_LAYERS]}")
 baseline_best_auc = max(base_auc_per_layer.values())
 print(f"Baseline best AUC (test) = {baseline_best_auc:.4f}")
 
-# ── 5. Neuron rankings from TRAIN activations ──────────────────────────────────
+# 5. Neuron rankings from TRAIN activations
 print("\nComputing neuron rankings...")
 
 # Per-layer ranking for E2 and E3
@@ -111,9 +111,9 @@ global_importance = np.abs(clf_global.coef_[0])
 global_rank = np.argsort(global_importance)[::-1]
 print("Rankings ready.")
 
-# ── Pre-train per-layer probes on BASELINE train activations (transferability) ─
+# -- Pre-train per-layer probes on BASELINE train activations (transferability) -
 # Probes are trained once on undefended activations. At evaluation they receive
-# defended test activations — the attacker uses a stale probe, as in MalwSpecSys.
+# defended test activations - the attacker uses a stale probe, as in MalwSpecSys.
 print("Pre-training baseline per-layer probes for transferability evaluation...")
 baseline_probes = {}
 for lid in range(L):
@@ -136,7 +136,7 @@ def tpr_at_fpr1(scores, y_true):
             best_tpr = tp / n_pos
     return best_tpr
 
-# ── Helper: evaluate DEFENDED TEST activations with BASELINE-trained probes ───
+# Helper: evaluate DEFENDED TEST activations with BASELINE-trained probes
 def eval_defended(A_def):
     """Transferability protocol: baseline probes evaluated on defended test set."""
     A_def_te = A_def[te_idx]   # only test partition is defended for evaluation
@@ -152,7 +152,7 @@ def eval_defended(A_def):
     tpr = tpr_at_fpr1(scores, y_mem[te_idx])
     return best_auc, best_layer, tpr, auc_pl
 
-# ── 6. Sweep ───────────────────────────────────────────────────────────────────
+# 6. Sweep
 print(f"\n{'p':>6}  {'k_g':>5}  "
       f"{'E1_auc':>7}  {'E2_auc':>7}  {'E3_auc':>7}  {'E4_auc':>7}  "
       f"{'E2_tpr':>7}  {'E4_tpr':>7}")
@@ -205,7 +205,7 @@ for top_p in TOP_P_VALS:
           f"{e1_auc:>7.4f}  {e2_auc:>7.4f}  {e3_auc:>7.4f}  {e4_auc:>7.4f}  "
           f"{e2_tpr:>7.4f}  {e4_tpr:>7.4f}")
 
-# ── 7. Save ────────────────────────────────────────────────────────────────────
+# 7. Save
 out = {
     "run_ts": TS,
     "l_star": L_STAR,

@@ -26,7 +26,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import f1_score
 from transformers import AutoModelForSequenceClassification
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
+# Paths
 BASE_DIR   = "/Users/kikay/Desktop/backup_synapse"
 CSV_PATH   = f"{BASE_DIR}/BigBird_tokens_PT.csv"
 ACT_BASE   = f"{BASE_DIR}/activations_bigbird.json"
@@ -34,7 +34,7 @@ SWEEP_DIR  = f"{BASE_DIR}/sweep_20260428_205017"
 MODEL_PATH = f"{BASE_DIR}/best_model_BigBird.pth"
 MODEL_HF   = "google/bigbird-roberta-base"
 
-# ── Config ─────────────────────────────────────────────────────────────────────
+# Config
 SEED        = 42
 NUM_LABELS  = 5
 N_PER_CLASS = 10
@@ -46,7 +46,7 @@ EXPERIMENTS = {
     "e4_rnd": "E4_RND",
 }
 
-# ── Hook functions (exact copy from synapseFINAL_run.py) ───────────────────────
+# Hook functions (exact copy from synapseFINAL_run.py)
 def make_cls_silence_hook(indices):
     idxs = torch.tensor(indices, dtype=torch.long)
 
@@ -76,10 +76,10 @@ def make_cls_silence_hook(indices):
 def get_encoder_layers(model):
     if hasattr(model, "bert"):
         return model.bert.encoder.layer
-    raise NotImplementedError("Unsupported architecture — expected model.bert")
+    raise NotImplementedError("Unsupported architecture - expected model.bert")
 
 
-# ── Recover which neurons were zeroed by comparing activation files ─────────────
+# Recover which neurons were zeroed by comparing activation files
 def extract_hook_map(base_path, def_path, n_lines=60):
     """
     Read n_lines from base and defended JSONL files, compare CLS activations.
@@ -130,11 +130,11 @@ def extract_hook_map(base_path, def_path, n_lines=60):
     return hook_map
 
 
-# ── Forward pass with optional hooks ───────────────────────────────────────────
+# Forward pass with optional hooks
 def run_forward(model, sample_df, labels, device, hook_map=None):
     """
     Run full model forward pass on sample_df.
-    hook_map: {layer_id: [neuron_indices]} — applied before inference, removed after.
+    hook_map: {layer_id: [neuron_indices]} - applied before inference, removed after.
     Returns weighted F1.
     """
     layers  = get_encoder_layers(model)
@@ -161,7 +161,7 @@ def run_forward(model, sample_df, labels, device, hook_map=None):
     return float(f1_score(labels, preds, average="weighted", zero_division=0))
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# Main
 def main():
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -171,7 +171,7 @@ def main():
     print("=" * 60)
 
     # 1. Load CSV
-    print("\n── Step 1: Loading CSV ──")
+    print("\n-- Step 1: Loading CSV --")
     print(f"  CSV: {CSV_PATH}")
     if not os.path.exists(CSV_PATH):
         print(f"ERROR: {CSV_PATH} not found.")
@@ -197,7 +197,7 @@ def main():
     selected_indices = sorted(selected_indices)
     print(f"  Selected {len(selected_indices)} row indices.")
 
-    # Load ONLY the 50 selected rows — skip everything else from disk
+    # Load ONLY the 50 selected rows - skip everything else from disk
     print("  Loading only the 50 selected rows from CSV...")
     all_row_nums  = set(range(len(df_meta)))
     rows_to_skip  = sorted(all_row_nums - set(selected_indices))
@@ -223,14 +223,14 @@ def main():
     sample_len = sum(df["attention_mask"].iloc[0])
     print(f"  Real tokens in first selected row: {sample_len} / {len(df['attention_mask'].iloc[0])}")
 
-    # 2. Already selected above — just rename and confirm
-    print(f"\n── Step 2: Confirming balanced selection ──")
+    # 2. Already selected above - just rename and confirm
+    print(f"\n-- Step 2: Confirming balanced selection --")
     sample_df = df
     labels    = sample_df["label_enc"].tolist()
     print(f"  {len(sample_df)} examples, distribution: {sample_df['label_enc'].value_counts().sort_index().to_dict()}")
 
     # 3. Load BigBird model
-    print("\n── Step 3: Loading BigBird model ──")
+    print("\n-- Step 3: Loading BigBird model --")
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
@@ -248,12 +248,12 @@ def main():
     print("  ✓ Model ready.")
 
     # 4. Baseline
-    print("\n── Step 4: Baseline (no hooks) ──")
+    print("\n-- Step 4: Baseline (no hooks) --")
     base_f1 = run_forward(model, sample_df, labels, device, hook_map=None)
     print(f"  Baseline weighted F1 = {base_f1:.4f}")
 
     # 5. Sweep
-    print("\n── Step 5: Sweep over conditions ──")
+    print("\n-- Step 5: Sweep over conditions --")
     results = []
     for top_p in TOP_P_LIST:
         print(f"\n  top_p = {top_p}")
@@ -309,7 +309,7 @@ def main():
               f"{r.get('e2_p4a_weighted_f1') or 0:>7.4f}  "
               f"{r.get('e3_p4b_weighted_f1') or 0:>7.4f}  "
               f"{r.get('e4_rnd_weighted_f1') or 0:>7.4f}")
-    print(f"\n✅ Saved → {out_path}")
+    print(f"\nSaved → {out_path}")
     print("=" * 60)
 
 

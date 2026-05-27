@@ -1,5 +1,5 @@
 """
-Presentation figures — clean, minimal, Canva-ready.
+Presentation figures - clean, minimal, Canva-ready.
 One story per figure, no overlapping text, readable at projector size.
 
 Nomenclatura actual (nueva):
@@ -9,15 +9,15 @@ Nomenclatura actual (nueva):
   E4 = Global informed       (datos: e3_p4b,  task: e4_global_weighted_f1)
 
 Output: figs_presentacion/
-  P01_vulnerability_bar.pdf      — baseline AUC vs random chance
-  P02_layer_gradient.pdf         — per-layer AUC (where the model leaks)
-  P03_e2_layer_shift.pdf         — L11 vs L10 as top_p increases (E2)
-  P04_e3_floor.pdf               — E2 vs E3 sweep + L7 floor line
-  P05_e4_tpr.pdf                 — E4 TPR@1%FPR sweep
-  P06_e4_sweet_spot.pdf          — E4 dual-axis AUC + F1
-  P07_e1_bars.pdf                — E4 vs E1 at top_p=0.4 (AUC / TPR / F1)
-  P08_all_auc.pdf                — all 4 conditions AUC sweep
-  P09_all_f1.pdf                 — all 4 conditions F1 sweep
+  P01_vulnerability_bar.pdf      - baseline AUC vs random chance
+  P02_layer_gradient.pdf         - per-layer AUC (where the model leaks)
+  P03_e2_layer_shift.pdf         - L11 vs L10 as top_p increases (E2)
+  P04_e3_floor.pdf               - E2 vs E3 sweep + L7 floor line
+  P05_e4_tpr.pdf                 - E4 TPR@1%FPR sweep
+  P06_e4_sweet_spot.pdf          - E4 dual-axis AUC + F1
+  P07_e1_bars.pdf                - E4 vs E1 at top_p=0.4 (AUC / TPR / F1)
+  P08_all_auc.pdf                - all 4 conditions AUC sweep
+  P09_all_f1.pdf                 - all 4 conditions F1 sweep
 """
 
 import json, glob, os, warnings
@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore")
 
-# ── Style ─────────────────────────────────────────────────────────────────────
+# Style
 try:
     plt.style.use("seaborn-v0_8-whitegrid")
 except OSError:
@@ -55,17 +55,17 @@ plt.rcParams.update({
 C = {
     "baseline": "#555555",
     "chance":   "#BBBBBB",
-    "e1":       "#E07B39",   # E1 random — naranja
-    "e2":       "#2F8EC3",   # E2 single-layer — azul
-    "e3":       "#4BAE8A",   # E3 four-layer — verde
-    "e4":       "#9B6BC5",   # E4 global — morado
+    "e1":       "#E07B39",   # E1 random - naranja
+    "e2":       "#2F8EC3",   # E2 single-layer - azul
+    "e3":       "#4BAE8A",   # E3 four-layer - verde
+    "e4":       "#9B6BC5",   # E4 global - morado
     "red":      "#D9534F",
 }
 
 OUT = "../figs_presentacion"
 os.makedirs(OUT, exist_ok=True)
 
-# ── Load data ─────────────────────────────────────────────────────────────────
+# Load data
 with open("../results/sweep_results_malwspecsys.json") as f:
     mem = json.load(f)
 
@@ -112,9 +112,9 @@ e2_l10 = [json.loads(r["e1_p3_auc_per_layer"]).get("10", 0) for r in mem["result
 sp = TOP_P.index(0.4)   # sweet-spot index
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P01 — Vulnerability bar: chance vs baseline
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P01 - Vulnerability bar: chance vs baseline
+# ---
 fig, ax = plt.subplots(figsize=(6, 5))
 
 bars = ax.bar(["Random\nchance", "Undefended\nmodel"],
@@ -137,9 +137,9 @@ plt.close()
 print("✓ P01")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P02 — Per-layer AUC gradient  (l* = L11)
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P02 - Per-layer AUC gradient  (l* = L11)
+# ---
 fig, ax = plt.subplots(figsize=(9, 5))
 
 ax.plot(l_labs, l_vals, "o-", color=C["red"], zorder=3)
@@ -167,9 +167,9 @@ plt.close()
 print("✓ P02")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P03 — E2: layer shift  (L11 defended, L10 absorbs signal)
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P03 - E2: layer shift  (L11 defended, L10 absorbs signal)
+# ---
 fig, ax = plt.subplots(figsize=(9, 5))
 
 ax.plot(x, e2_l11, "o--", color=C["e2"], label="L11  (defended)")
@@ -191,9 +191,9 @@ plt.close()
 print("✓ P03")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P04 — E3: AUC sweep vs E2, with L7 floor
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P04 - E3: AUC sweep vs E2, with L7 floor
+# ---
 fig, ax = plt.subplots(figsize=(9, 5))
 
 ax.axhline(BASE_AUC, color=C["baseline"], linewidth=1.5, linestyle=":",
@@ -217,9 +217,9 @@ plt.close()
 print("✓ P04")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P05 — E4: TPR@1%FPR sweep
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P05 - E4: TPR@1%FPR sweep
+# ---
 fig, ax = plt.subplots(figsize=(9, 5))
 
 ax.plot(x, e4_tpr, "^-", color=C["e4"], label="E4  TPR@1%FPR")
@@ -243,9 +243,9 @@ plt.close()
 print("✓ P05")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P06 — E4: dual-axis sweet spot (AUC + F1)
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P06 - E4: dual-axis sweet spot (AUC + F1)
+# ---
 fig, ax1 = plt.subplots(figsize=(9, 5))
 ax2 = ax1.twinx()
 
@@ -281,9 +281,9 @@ plt.close()
 print("✓ P06")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P07 — E4 vs E1 at top_p=0.4  (grouped bars, 3 metrics)
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P07 - E4 vs E1 at top_p=0.4  (grouped bars, 3 metrics)
+# ---
 fig, ax = plt.subplots(figsize=(9, 5))
 
 metrics  = ["MIA AUC", "TPR @ 1% FPR", "Task weighted F1"]
@@ -316,9 +316,9 @@ plt.close()
 print("✓ P07")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P08 — All conditions AUC sweep
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P08 - All conditions AUC sweep
+# ---
 fig, ax = plt.subplots(figsize=(10, 5.5))
 
 ax.axhline(BASE_AUC, color=C["baseline"], linewidth=1.5, linestyle="--",
@@ -343,9 +343,9 @@ plt.close()
 print("✓ P08")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# P09 — All conditions F1 sweep
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
+# P09 - All conditions F1 sweep
+# ---
 fig, ax = plt.subplots(figsize=(10, 5.5))
 
 ax.axhline(BASE_F1, color=C["baseline"], linewidth=1.5, linestyle="--",
@@ -370,4 +370,4 @@ plt.close()
 print("✓ P09")
 
 
-print(f"\n✅  9 figures saved to {OUT}/")
+print(f"\n 9 figures saved to {OUT}/")
