@@ -1,4 +1,8 @@
 # Framework-for-Neuron-Level-Interpretability-and-Robustness-in-LLMs
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21478225.svg)](https://doi.org/10.5281/zenodo.21478225)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
+
 <img width="861" height="411" alt="PropuestaDiagramaFinal drawio" src="https://github.com/user-attachments/assets/53369546-47e0-474c-93a1-431367245e29" />
 
 
