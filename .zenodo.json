@@ -1,0 +1,24 @@
+{
+  "title": "Neuron-Level Interpretability and Robustness in LLMs (SYNAPSE)",
+  "description": "Auditing framework for neuron-level interpretability and robustness of Transformer-based classifiers. Includes probe-based neuron ranking, global and per-class neuron silencing, random-neuron controls, attribution-method agreement (conductance and activation x gradient), attribution-guided bit-flip, and output/weight-space perturbations, evaluated on malware system-call detection and on the GoEmotions emotion-classification task. Code accompanying the SYNAPSE paper.",
+  "upload_type": "software",
+  "license": "BSD-3-Clause",
+  "creators": [
+    { "name": "kikaymusic" }
+  ],
+  "keywords": [
+    "neuron interpretability",
+    "model auditing",
+    "robustness",
+    "transformers",
+    "malware detection",
+    "SYNAPSE"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/kikaymusic/Neuron-Level-Interpretability-and-Robustness-in-LLMs",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

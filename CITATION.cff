@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Neuron-Level Interpretability and Robustness in LLMs (SYNAPSE)"
+abstract: >-
+  Auditing framework for neuron-level interpretability and robustness of
+  Transformer-based classifiers: probe-based neuron ranking, global and
+  per-class silencing, random-neuron controls, attribution-method agreement,
+  attribution-guided bit-flip, and output/weight-space perturbations.
+authors:
+  - name: "kikaymusic"
+version: "1.0.0"
+date-released: "2026-07-21"
+license: BSD-3-Clause
+repository-code: "https://github.com/kikaymusic/Neuron-Level-Interpretability-and-Robustness-in-LLMs"
+keywords:
+  - neuron interpretability
+  - model auditing
+  - robustness
+  - transformers
+  - malware detection
+# doi: 10.5281/zenodo.XXXXXXX   # <- rellenar con el concept DOI tras el primer release en Zenodo
