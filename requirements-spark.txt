@@ -1,0 +1,23 @@
+# Dependencias para ejecutar SYNAPSErevision.ipynb en la DGX Spark.
+# NO incluye torch/numpy: se usan los del contenedor nvcr.io/nvidia/pytorch (compilados
+# para la GPU de la Spark). transformers va clavado al MISMO commit del venv del Mac.
+transformers @ git+https://github.com/huggingface/transformers@653eb40425344b89b5a24e7b07eb3095b04cdc9d
+tokenizers==0.19.1
+accelerate==1.12.0
+safetensors==0.7.0
+scikit-learn==1.4.2
+scipy==1.13.0
+pandas==2.2.2
+matplotlib==3.10.8
+seaborn==0.13.2
+matplotlib-venn==1.1.2
+tqdm==4.67.3
+nbconvert==7.17.0
+ipywidgets
+papermill
+imbalanced-learn==0.14.1   # imported transitively by neurox/lumia (import imblearn)
+svgwrite==1.4.3
+# h5py: intentionally NOT installed — NeuroX only imports it for the hdf5
+# activation format, which this project does not use (JSON activations). The
+# import was made lazy in neurox/data/{writer,loader}.py so the module loads
+# without h5py. (h5py had version conflicts with the container's stack.)

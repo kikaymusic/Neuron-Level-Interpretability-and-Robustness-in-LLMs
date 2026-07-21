@@ -36,8 +36,6 @@ import argparse
 import collections
 import json
 
-import h5py
-
 
 class ActivationsWriter:
     """
@@ -188,6 +186,7 @@ class HDF5ActivationsWriter(ActivationsWriter):
         self.activations_file = None
 
     def open(self):
+        import h5py  # lazy import: only the (unused) hdf5 path needs it
         self.activations_file = h5py.File(self.filename, "w")
         self.sentence_to_index = {}
 
@@ -210,6 +209,7 @@ class HDF5ActivationsWriter(ActivationsWriter):
         self.sentence_to_index[sentence] = str(sentence_idx)
 
     def close(self):
+        import h5py  # lazy import: only the (unused) hdf5 path needs it
         sentence_index_dataset = self.activations_file.create_dataset(
             "sentence_to_index", (1,), dtype=h5py.special_dtype(vlen=str)
         )

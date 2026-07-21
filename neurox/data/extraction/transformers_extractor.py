@@ -103,9 +103,9 @@ def aggregate_repr(state, start, end, aggregation):
         Matrix of size [NUM_LAYERS x LAYER_DIM]
     """
     if end < start:
-        sys.stderr.write("WARNING: An empty slice of tokens was encountered. " +
-            "This probably implies a special unicode character or text " +
-            "encoding issue in your original data that was dropped by the " +
+        sys.stderr.write("WARNING: An empty slice of tokens was encountered. "+
+            "This probably implies a special unicode character or text "+
+            "encoding issue in your original data that was dropped by the "+
             "transformer model's tokenizer.\n")
         return np.zeros((state.shape[0], state.shape[2]))
     if aggregation == "first":
@@ -138,7 +138,7 @@ def extract_sentence_representations(
     original_tokens = sentence.split(" ")
     # Add a letter and space before each word since some tokenizers are space sensitive
     tmp_tokens = [
-        "a" + " " + x if x_idx != 0 else x for x_idx, x in enumerate(original_tokens)
+        "a"+ " "+ x if x_idx != 0 else x for x_idx, x in enumerate(original_tokens)
     ]
     assert len(original_tokens) == len(tmp_tokens)
 
@@ -175,8 +175,8 @@ def extract_sentence_representations(
             ]
         all_hidden_states = np.array(all_hidden_states)
 
-    print('Sentence         : "%s"' % (sentence))
-    print("Original    (%03d): %s" % (len(original_tokens), original_tokens))
+    print('Sentence         : "%s"'% (sentence))
+    print("Original    (%03d): %s"% (len(original_tokens), original_tokens))
     print(
         "Tokenized   (%03d): %s"
         % (
@@ -234,8 +234,8 @@ def extract_sentence_representations(
         )
         counter += tokenization_counts[token]
 
-    print("Detokenized (%03d): %s" % (len(detokenized), detokenized))
-    print("Counter: %d" % (counter))
+    print("Detokenized (%03d): %s"% (len(detokenized), detokenized))
+    print("Counter: %d"% (counter))
 
     if inputs_truncated:
         print("WARNING: Input truncated because of length, skipping check")
@@ -255,8 +255,9 @@ def extract_representations(
     output_type="json",
     decompose_layers=False,
     filter_layers=None,
+    pooling="cls",  # "cls"(token 0) or "mean"(average over tokens) — R3.4/R7.6/R1.2
 ):
-    print("📤 Saving activations to file")
+    print("Saving activations to file")
     writer = ActivationsWriter.get_writer(
         output_file,
         filetype=output_type,
@@ -264,7 +265,7 @@ def extract_representations(
         filter_layers=filter_layers,
     )
 
-    print("🔄 Extracting CLS token representations from all hidden layers")
+    print(f"Extracting {pooling.upper()} token representations from all hidden layers")
     for sentence_idx, token_list in enumerate(input_tokens_list):
         input_ids = torch.tensor([token_list]).to(device)  # (1, seq_len)
 
@@ -274,19 +275,24 @@ def extract_representations(
 
         hidden_states = torch.stack(hidden_states).squeeze(1)  # (num_layers, seq_len, hidden_dim)
 
-        cls_hidden_states = hidden_states[:, 0, :]            # (num_layers, hidden_dim)
-        cls_hidden_states = cls_hidden_states.unsqueeze(1)   # (num_layers, 1, hidden_dim)
+        if pooling == "mean":
+            pooled = hidden_states.mean(dim=1)               # (num_layers, hidden_dim) — mean over tokens
+            token_label = "[MEAN]"
+        else:
+            pooled = hidden_states[:, 0, :]                  # (num_layers, hidden_dim) — CLS (token 0)
+            token_label = "[CLS]"
+        pooled = pooled.unsqueeze(1)                         # (num_layers, 1, hidden_dim)
 
         writer.write_activations(
             sentence_idx,
-            ["[CLS]"],
-            cls_hidden_states.cpu().numpy()
+            [token_label],
+            pooled.cpu().numpy()
         )
 
-        print(f"✅ Sample {sentence_idx}: CLS activations extracted with shape {cls_hidden_states.shape}")
+        print(f"Sample {sentence_idx}: {token_label} activations extracted with shape {pooled.shape}")
 
     writer.close()
-    print(f"✅ Activations saved to {output_file}")
+    print(f"Activations saved to {output_file}")
 
 
 
@@ -305,24 +311,24 @@ def main():
     ActivationsWriter.add_writer_options(parser)
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() and not args.disable_cuda else "cpu")
+    device = torch.device("cuda"if torch.cuda.is_available() and not args.disable_cuda else "cpu")
 
-    print(f"📥 Loading model from {args.model_desc}")
+    print(f"Loading model from {args.model_desc}")
     model = AutoModelForSequenceClassification.from_pretrained(args.model_desc, num_labels=5)
     
     weights_path = "/home/kikay/LLM_Syscalls/best_model_BigBird.pth"
-    print(f"🔄 Loading weights from {weights_path}")
+    print(f"Loading weights from {weights_path}")
     state_dict = torch.load(weights_path, map_location="cpu")
     model.load_state_dict(state_dict, strict=False)
 
     model.to(device)
     model.eval()
-    print("✅ Model loaded and ready")
+    print("Model loaded and ready")
 
-    print(f"📥 Loading data from {args.input_csv}")
+    print(f"Loading data from {args.input_csv}")
     df = pd.read_csv(args.input_csv)
     df['input_ids'] = df['input_ids'].apply(lambda x: list(map(int, x.strip("[]").split(","))))
-    print("✅ Data loaded successfully")
+    print("Data loaded successfully")
 
     extract_representations(
         model,
@@ -334,4 +340,4 @@ def main():
         filter_layers=args.filter_layers
     )
 
-    print(f"✅ Activations extracted and saved to {args.output_file}")
+    print(f"Activations extracted and saved to {args.output_file}")

@@ -6,7 +6,6 @@ tokens and labels. Functions that support tokenized data are also provided.
 import json
 import pickle
 
-import h5py
 import numpy as np
 import torch
 
@@ -29,7 +28,7 @@ def load_activations(
     dtype : str, optional
         Only implemented for hdf5 and json files. Default: None
         None if the dtype of the activation should be the same dtype as in the activations file (only relevant for hdf5)
-        'float16' or 'float32' to enforce half-precision or full-precision floats
+        'float16'or 'float32'to enforce half-precision or full-precision floats
 
 
     Returns
@@ -52,7 +51,7 @@ def load_activations(
     #   as activations may have been saved as CUDA variables
     if file_ext == "t7":
         # t7 loading requires torch < 1.0
-        print("Loading seq2seq-attn activations from %s..." % (activations_path))
+        print("Loading seq2seq-attn activations from %s..."% (activations_path))
         assert (
             num_neurons_per_layer is not None
         ), "t7 activations require num_neurons_per_layer"
@@ -64,7 +63,7 @@ def load_activations(
         if is_brnn:
             num_layers /= 2
     elif file_ext == "pt":
-        print("Loading OpenNMT-py activations from %s..." % (activations_path))
+        print("Loading OpenNMT-py activations from %s..."% (activations_path))
         assert (
             num_neurons_per_layer is not None
         ), "pt activations require num_neurons_per_layer"
@@ -75,7 +74,7 @@ def load_activations(
         ]
         num_layers = len(activations[0][0]) / num_neurons_per_layer
     elif file_ext == "acts":
-        print("Loading generic activations from %s..." % (activations_path))
+        print("Loading generic activations from %s..."% (activations_path))
         assert (
             num_neurons_per_layer is not None
         ), "acts activations require num_neurons_per_layer"
@@ -83,7 +82,7 @@ def load_activations(
             activations = pickle.load(activations_file)
 
         # Combine all layers sequentially
-        print("Combining layers " + str([a[0] for a in activations]))
+        print("Combining layers "+ str([a[0] for a in activations]))
         activations = [a[1] for a in activations]
         num_layers = len(activations)
         num_sentences = len(activations[0])
@@ -95,7 +94,8 @@ def load_activations(
             concatenated_activations.append(np.concatenate(sentence_acts, axis=1))
         activations = concatenated_activations
     elif file_ext == "hdf5":
-        print("Loading hdf5 activations from %s..." % (activations_path))
+        import h5py  # lazy import: only the (unused) hdf5 path needs it
+        print("Loading hdf5 activations from %s..."% (activations_path))
         representations = h5py.File(activations_path, "r")
         sentence_to_index = json.loads(representations.get("sentence_to_index")[0])
         activations = []
@@ -117,8 +117,8 @@ def load_activations(
             activations.append(sentence_acts.numpy().astype(dtype))
         num_layers = len(activations[0][0]) / num_neurons_per_layer
     elif file_ext == "json":
-        dtype = "float32" if dtype == None else dtype
-        print("Loading json activations from %s..." % (activations_path))
+        dtype = "float32"if dtype == None else dtype
+        print("Loading json activations from %s..."% (activations_path))
         activations = []
         with open(activations_path) as fp:
             for line in fp:
@@ -161,11 +161,11 @@ def filter_activations_by_layers(
     test_activations : list of numpy.ndarray
         Similar to ``train_activations`` but with sentences from a test set.
     filter_layers : str
-        A comma-separated string of the form "f1,f2,f10". "f" indicates a "forward"
-        layer while "b" indicates a backword layer in a Bidirectional RNN. If the
+        A comma-separated string of the form "f1,f2,f10". "f"indicates a "forward"
+        layer while "b"indicates a backword layer in a Bidirectional RNN. If the
         activations are from different kind of model, set ``is_brnn`` to ``False``
-        and provide only "f" entries. The number next to "f" is the layer number,
-        1-indexed. So "f1" corresponds to the embedding layer and so on.
+        and provide only "f"entries. The number next to "f"is the layer number,
+        1-indexed. So "f1"corresponds to the embedding layer and so on.
     rnn_size : int
         Number of neurons in every layer.
     num_layers : int
@@ -203,7 +203,7 @@ def filter_activations_by_layers(
     layers_idx = []
     for brnn_idx, b in enumerate(layer_prefixes):
         for l in layers:
-            if "%s%d" % (b, l) in _layers:
+            if "%s%d"% (b, l) in _layers:
                 start_idx = brnn_idx * (num_layers * rnn_size) + (l - 1) * rnn_size
                 end_idx = brnn_idx * (num_layers * rnn_size) + (l) * rnn_size
 
@@ -276,7 +276,7 @@ def load_aux_data(
         for line_idx, line in enumerate(source_aux_fp):
             line_tokens = line.strip().split()
             if len(line_tokens) > max_sent_l:
-                print("Skipping line #%d because of length (aux)" % (line_idx))
+                print("Skipping line #%d because of length (aux)"% (line_idx))
                 skipped_lines.add(line_idx)
             if ignore_start_token:
                 line_tokens = line_tokens[1:]
@@ -286,7 +286,7 @@ def load_aux_data(
         for line_idx, line in enumerate(source_fp):
             line_tokens = line.strip().split()
             if len(line_tokens) > max_sent_l:
-                print("Skipping line #%d because of length (source)" % (line_idx))
+                print("Skipping line #%d because of length (source)"% (line_idx))
                 skipped_lines.add(line_idx)
             if ignore_start_token:
                 line_tokens = line_tokens[1:]
@@ -296,7 +296,7 @@ def load_aux_data(
         for line_idx, line in enumerate(labels_fp):
             line_tokens = line.strip().split()
             if len(line_tokens) > max_sent_l:
-                print("Skipping line #%d because of length (label)" % (line_idx))
+                print("Skipping line #%d because of length (label)"% (line_idx))
                 skipped_lines.add(line_idx)
             if ignore_start_token:
                 line_tokens = line_tokens[1:]
@@ -306,7 +306,7 @@ def load_aux_data(
         tokens["source_aux"]
     ) == len(
         tokens["target"]
-    ), "Number of lines do not match (source: %d, aux: %d, target: %d)!" % (
+    ), "Number of lines do not match (source: %d, aux: %d, target: %d)!"% (
         len(tokens["source"]),
         len(tokens["source_aux"]),
         len(tokens["target"]),
@@ -314,13 +314,13 @@ def load_aux_data(
 
     assert len(activations) == len(
         tokens["source"]
-    ), "Number of lines do not match (activations: %d, source: %d)!" % (
+    ), "Number of lines do not match (activations: %d, source: %d)!"% (
         len(activations),
         len(tokens["source"]),
     )
 
     for num_deleted, line_idx in enumerate(sorted(skipped_lines)):
-        print("Deleting skipped line %d" % (line_idx))
+        print("Deleting skipped line %d"% (line_idx))
         del tokens["source_aux"][line_idx]
         del tokens["source"][line_idx]
         del tokens["target"][line_idx]
@@ -503,6 +503,6 @@ def convert_labels_to_numeric(labels_file, output_file):
         for num_label in numeric_labels:
             f.write(f"{num_label}\n")
 
-    print("✅ Etiquetas convertidas y guardadas en:", output_file)
-    print("📄 Mapeo de etiquetas:", label_mapping)
+    print("Etiquetas convertidas y guardadas en:", output_file)
+    print("Mapeo de etiquetas:", label_mapping)
     return label_mapping

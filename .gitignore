@@ -42,3 +42,31 @@ figs_syn+lum/
 # MAB: figuras generadas y activaciones
 membership_auditing_block/figs_*/
 membership_auditing_block/results/activations_*.json
+
+# Cachés de modelos HuggingFace (regenerables, ~GB)
+hf_cache/
+.hf_cache/
+**/.hf_cache/
+
+# Salidas de ejecución, logs y directorios de resultados (release solo-código)
+spark_out/
+spark_out2/
+spark_out3/
+*.out.ipynb
+*.log
+
+# Scripts de re-ejecución parcial (redundantes con run_all.sh / run_model.sh)
+run_bd.sh
+run_d.sh
+run_rest.sh
+
+# Smoke, backups y notas de trabajo (no forman parte del release)
+*smoke*
+*_smoke/
+_smoke/
+*.bak
+CHECKPOINT.md
+SPARK_smoke_checklist.md
+confirm_fix.sh
+run_confirm.log
+*confirm*.out.ipynb
