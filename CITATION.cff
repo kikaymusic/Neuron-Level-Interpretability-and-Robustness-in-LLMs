@@ -8,8 +8,8 @@ abstract: >-
   attribution-guided bit-flip, and output/weight-space perturbations.
 authors:
   - name: "kikaymusic"
-version: "1.0.0"
-date-released: "2026-07-21"
+version: "1.1.0"
+date-released: "2026-09-20"
 license: BSD-3-Clause
 repository-code: "https://github.com/kikaymusic/Neuron-Level-Interpretability-and-Robustness-in-LLMs"
 keywords:
