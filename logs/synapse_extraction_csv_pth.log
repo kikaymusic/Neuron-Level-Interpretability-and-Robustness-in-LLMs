@@ -1,5 +1,0 @@
-2026-05-13 00:54:34,815 - INFO - 🚀 Logging configured
-2026-05-13 00:54:42,921 - INFO - ⚡ Reduced dataset found: data/BigBird/reduced/BigBird_tokens_reduced.csv. Skipping reduction.
-2026-05-13 00:54:48,209 - INFO - ✅ Dataloader created
-2026-05-13 00:54:50,072 - INFO - ⚡ Activations file found: data/BigBird/activations.json. Skipping extraction.
-2026-05-13 00:54:52,091 - INFO - ✅ Loaded activations from data/BigBird/activations.json with 12 layers

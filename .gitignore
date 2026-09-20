@@ -70,3 +70,20 @@ SPARK_smoke_checklist.md
 confirm_fix.sh
 run_confirm.log
 *confirm*.out.ipynb
+
+# Editor / IDE
+.idea
+.vscode
+
+# Upstream tooling inherited from the vendored NeuroX copy
+.bumpversion.cfg
+.coveragerc
+.readthedocs.yml
+.github
+
+# Run artifacts
+logs
+results/_smoke
+*.out.ipynb
+R11bS_*.ipynb
+*_run.log
